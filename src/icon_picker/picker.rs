@@ -5,10 +5,10 @@ use super::{
 use crate::theme;
 use ratatui::{
     Frame,
-    layout::{Constraint, Flex, Layout, Rect},
+    layout::{Constraint, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Clear, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
 };
 use std::time::Instant;
 
@@ -174,12 +174,6 @@ pub fn click_tab(state: &mut IconPickerState, x: u16, y: u16) -> bool {
 }
 
 pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &IconCatalogData) {
-    let height = ((area.height as u32 * 70) / 100) as u16;
-    let height = height.clamp(14, area.height);
-    let width = 64u16.min(area.width);
-    let popup = centered_rect(width, height, area);
-    f.render_widget(Clear, popup);
-
     let outer = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -190,8 +184,8 @@ pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &Icon
                 .fg(theme::AMBER_GLOW())
                 .add_modifier(Modifier::BOLD),
         ));
-    let inner = outer.inner(popup);
-    f.render_widget(outer, popup);
+    let inner = outer.inner(area);
+    f.render_widget(outer, area);
 
     let layout = Layout::vertical([
         Constraint::Length(3),
@@ -426,13 +420,6 @@ fn apply_scroll_in_sections(state: &mut IconPickerState, sections: &[SectionView
     }
 }
 
-fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
-    let vertical = Layout::vertical([Constraint::Length(height)]).flex(Flex::Center);
-    let horizontal = Layout::horizontal([Constraint::Length(width)]).flex(Flex::Center);
-    let [vert] = vertical.areas(area);
-    let [rect] = horizontal.areas(vert);
-    rect
-}
 
 #[cfg(test)]
 mod tests {

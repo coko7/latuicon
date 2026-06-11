@@ -9,17 +9,12 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{
-    Terminal,
-    backend::CrosstermBackend,
-    style::Style,
-    widgets::Block,
-};
+use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_textarea::{Input, Key};
 use std::io;
 
-use icon_picker::{IconPickerState, picker};
 use icon_picker::catalog::IconCatalogData;
+use icon_picker::{IconPickerState, picker};
 
 fn main() -> io::Result<()> {
     let theme = parse_theme();
@@ -36,11 +31,8 @@ fn main() -> io::Result<()> {
     let mut selected: Option<String> = None;
 
     loop {
-        let bg = theme::BG_CANVAS();
         terminal.draw(|f| {
-            let area = f.area();
-            f.render_widget(Block::default().style(Style::default().bg(bg)), area);
-            picker::render(f, area, &state, &catalog);
+            picker::render(f, f.area(), &state, &catalog);
         })?;
 
         match event::read()? {
@@ -204,4 +196,3 @@ fn parse_theme() -> theme::Theme {
 
     theme::Theme::from_str(&name)
 }
-
