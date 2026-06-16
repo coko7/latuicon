@@ -2,6 +2,8 @@
 
 `latuicon`, the **lat**e **TUI** **icon** picker.
 
+<img width="1007" height="808" alt="demo" src="https://github.com/user-attachments/assets/5946233c-672c-4f2f-8025-c7a02a665a15" />
+
 > [!NOTE]
 > **This is a verbatim copy of the icon-picker component from [late.sh](https://github.com/mpiorowski/late-sh) by [@mpiorowski](https://github.com/mpiorowski), extracted into a standalone binary.**
 
