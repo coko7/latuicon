@@ -5,7 +5,7 @@ use super::{
 use crate::theme;
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
+    layout::{Alignment, Constraint, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph},
@@ -175,15 +175,13 @@ pub fn click_tab(state: &mut IconPickerState, x: u16, y: u16) -> bool {
 
 pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &IconCatalogData) {
     let outer = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(theme::BORDER_ACTIVE()))
         .title(Span::styled(
             " Icon Picker ",
             Style::default()
                 .fg(theme::AMBER_GLOW())
                 .add_modifier(Modifier::BOLD),
-        ));
+        ))
+        .title_alignment(Alignment::Center);
     let inner = outer.inner(area);
     f.render_widget(outer, area);
 
