@@ -420,7 +420,6 @@ fn apply_scroll_in_sections(state: &mut IconPickerState, sections: &[SectionView
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

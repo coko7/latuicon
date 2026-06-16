@@ -11,7 +11,7 @@ use crossterm::{
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_textarea::{Input, Key};
-use std::io;
+use std::{fs::OpenOptions, io};
 
 use icon_picker::catalog::IconCatalogData;
 use icon_picker::{IconPickerState, picker};
@@ -20,10 +20,12 @@ fn main() -> io::Result<()> {
     let theme = parse_theme();
     theme::set(theme);
 
+    let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
+
     enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
+
+    execute!(&tty, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
 
     let mut state = IconPickerState::default();
@@ -153,7 +155,7 @@ fn main() -> io::Result<()> {
     terminal.show_cursor()?;
 
     if let Some(icon) = selected {
-        println!("{icon}");
+        print!("{icon}");
     }
 
     Ok(())

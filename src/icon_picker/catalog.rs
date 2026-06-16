@@ -44,6 +44,7 @@ const COMMON_EMOJI: &[&str] = &[
 
 const COMMON_KAOMOJI: &[(&str, &str)] = &[
     ("(╯`Д´)╯︵ ┻━┻", "table flip"),
+    ("( ¬ᴗ¬)", "smirk"),
     ("(∩｀-´)⊃━☆ﾟ.*･｡ﾟ", "wizard"),
     ("(˶ᵔᗜᵔ˶)ﾉﾞ", "waving"),
     ("٩(◕‿◕｡)۶", "dancing"),
