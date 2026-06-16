@@ -2,7 +2,7 @@ use std::{env, fs, path::PathBuf};
 
 fn main() {
     let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let dst = manifest.join("src/icon_picker/glyphnames.json");
+    let dst = manifest.join("data/glyphnames.json");
 
     if !dst.exists() {
         // Try to copy from the sibling late-sh repo on first build.
@@ -19,5 +19,5 @@ fn main() {
     }
 
     // Re-run only if the JSON changes.
-    println!("cargo:rerun-if-changed=src/icon_picker/glyphnames.json");
+    println!("cargo:rerun-if-changed=data/glyphnames.json");
 }

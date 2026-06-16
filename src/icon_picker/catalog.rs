@@ -185,7 +185,7 @@ fn make_entry(icon: String, name: String) -> IconEntry {
 }
 
 fn build_emoji_common() -> Vec<IconEntry> {
-    let raw = include_str!("emoji.json");
+    let raw = include_str!("../../data/emoji.json");
     let val: Value = serde_json::from_str(raw).expect("invalid emoji.json");
     let common = val["common"].as_array().expect("emoji.json: missing 'common'");
     common
@@ -205,7 +205,7 @@ fn build_emoji_all() -> Vec<IconEntry> {
 }
 
 fn build_kaomoji() -> Vec<IconEntry> {
-    let raw = include_str!("kaomoji.json");
+    let raw = include_str!("../../data/kaomoji.json");
     let entries: Vec<Value> = serde_json::from_str(raw).expect("invalid kaomoji.json");
     entries
         .iter()
@@ -218,7 +218,7 @@ fn build_kaomoji() -> Vec<IconEntry> {
 }
 
 fn build_unicode_common() -> Vec<IconEntry> {
-    let raw = include_str!("unicode.json");
+    let raw = include_str!("../../data/unicode.json");
     let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
     let common = val["common"].as_array().expect("unicode.json: missing 'common'");
     common
@@ -230,7 +230,7 @@ fn build_unicode_common() -> Vec<IconEntry> {
 }
 
 fn load_unicode_ranges() -> Vec<IconSection> {
-    let raw = include_str!("unicode.json");
+    let raw = include_str!("../../data/unicode.json");
     let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
     let ranges = val["ranges"].as_array().expect("unicode.json: missing 'ranges'");
     ranges
@@ -378,7 +378,7 @@ fn make_unicode_entry(ch: char, allow_unnamed: bool) -> Option<IconEntry> {
 }
 
 fn build_nerd_sections(all: &[nerd_fonts::NerdFontGlyph]) -> (Vec<IconEntry>, Vec<IconEntry>) {
-    let raw = include_str!("common_nerd.json");
+    let raw = include_str!("../../data/common_nerd.json");
     let common_names: Vec<String> =
         serde_json::from_str(raw).expect("invalid common_nerd.json");
 
