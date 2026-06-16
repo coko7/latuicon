@@ -16,15 +16,10 @@ icon=$(latuicon)
 ## Install
 
 ```sh
-cargo install --path .
+./scripts/deploy.sh
 ```
 
-Or build a release binary directly:
-
-```sh
-cargo build --release
-# binary at ./target/release/latuicon
-```
+Builds a release binary and installs it to `~/.local/bin/latuicon`.
 
 ## Usage
 
