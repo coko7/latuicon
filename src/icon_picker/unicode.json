@@ -1,0 +1,10 @@
+{
+  "common": ["●", "◆", "★", "→", "│", "■", "▲", "○", "✦", "⟩", "·", "»", "✓", "✗"],
+  "ranges": [
+    {"title": "Box Drawing",            "start": "0x2500", "end": "0x259F"},
+    {"title": "Geometric Shapes",       "start": "0x25A0", "end": "0x25FF"},
+    {"title": "Arrows",                 "start": "0x2190", "end": "0x21FF"},
+    {"title": "Mathematical Operators", "start": "0x2200", "end": "0x22FF"},
+    {"title": "Dingbats",               "start": "0x2700", "end": "0x27BF"}
+  ]
+}

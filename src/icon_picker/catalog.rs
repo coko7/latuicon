@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 
+use serde_json::Value;
 use unicode_names2 as unicode_names;
 
 use super::IconPickerTab;
@@ -13,14 +14,14 @@ pub struct IconEntry {
 }
 
 pub struct IconSection {
-    pub title: &'static str,
+    pub title: String,
     pub entries: Vec<IconEntry>,
 }
 
-/// A filtered view over a catalog section. Static tabs borrow from the
-/// catalog; unicode search borrows from the cached query result.
+/// A filtered view over a catalog section. Entries borrow from the catalog;
+/// title borrows from the section string.
 pub struct SectionView<'a> {
-    pub title: &'static str,
+    pub title: &'a str,
     pub entries: Vec<&'a IconEntry>,
 }
 
@@ -37,106 +38,6 @@ pub struct IconCatalogData {
     unicode_query_cache: RefCell<Vec<CachedUnicodeQuery>>,
 }
 
-const COMMON_EMOJI: &[&str] = &[
-    "👍", "👎", "🙏", "🙌", "🙋", "🐐", "😂", "🫡", "👀", "💀", "🎉", "🤝", "🧡", "✅", "🔥", "⚡",
-    "🚀", "🤔", "🫠", "🌱", "🤖", "🔧", "💎", "⭐", "🎯",
-];
-
-const COMMON_KAOMOJI: &[(&str, &str)] = &[
-    ("(╯`Д´)╯︵ ┻━┻", "table flip"),
-    ("( ¬ᴗ¬)", "smirk"),
-    ("(∩｀-´)⊃━☆ﾟ.*･｡ﾟ", "wizard"),
-    ("(˶ᵔᗜᵔ˶)ﾉﾞ", "waving"),
-    ("٩(◕‿◕｡)۶", "dancing"),
-    ("☕_(ᵔ ̮ ᵔ)›", "coffee"),
-    ("(っ-,-)つ☕", "offering coffee"),
-    ("¯\\_(ツ)_/¯", "shrug"),
-    ("┐(´ー｀)┌", "meh shrug"),
-    ("ᕕ( ᐛ )ᕗ", "running"),
-    ("(˵ ¬ᴗ¬˵)", "flirty"),
-    ("(≖⩊≖)", "sly look"),
-    ("( ͡° ͜ʖ ͡°)", "lenny face"),
-    ("( ´･ ᵕ･)ﾉ(´ ᵕ `˶)", "peace"),
-    ("ᓚ₍⑅^- .-^₎ -ᶻ 𝗓 𐰁", "eepy"),
-    ("୧((#Φ益Φ#))୨", "angry"),
-    ("(* ^ ω ^)", "happy smile"),
-    ("*⸜( •ᴗ• )⸝*", "cheer yay"),
-    ("(>⩊<)", "excited laugh"),
-    ("(„• ᴗ •„)", "cute blush"),
-    ("(*￣▽￣)b", "thumbs up good"),
-    ("(´,,•ω•,,)♡", "love affection"),
-    ("(⁄ ⁄•⁄ω⁄•⁄ ⁄)", "blush shy"),
-    ("(⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)", "embarrassed flustered"),
-    ("(；￣Д￣)", "shocked wtf"),
-    ("( ` ω ´ )", "angry mad"),
-    ("(｡•́︿•̀｡)", "sad pleading"),
-    ("(っ˘̩╭╮˘̩)っ", "cry hug"),
-    ("ლ(ಠ_ಠ ლ)", "disapproval look"),
-    ("ʕ•ᴥ•ʔ", "bear"),
-    ("૮ ˶ᵔ ᵕ ᵔ˶ ა", "happy"),
-    ("(˶˃ ᵕ ˂˶) .ᐟ.ᐟ", "happy blush"),
-    ("₍₍⚞(˶ˆᗜˆ˵)⚟⁾⁾", "excited"),
-    ("ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧", "proud confident"),
-    ("₍^. .^₎⟆", "kitty"),
-    ("𓌉ς(•𐃷•)っ𓇋", "eat"),
-    ("🍽•⩊•🍽 ", "eat"),
-    ("(˵◝ ⩊  ◜˵マ", "roger"),
-    ("(ᵕ—ᴗ—)ᵕ", "content"),
-    ("ฅ^>⩊<^ ฅ", "happy cat"),
-    ("｡°(°¯᷄◠¯᷅°)°｡", "sobbing"),
-    ("(╥‸╥)", "crying"),
-    ("(ㆆ_ㆆ)", "speechless"),
-    ("(｡ᵕ ◞ _◟)", "sad"),
-    ("(˶°ㅁ°)!!", "shocked"),
-    (
-        "〜\u{2060}(\u{2060}꒪\u{2060}꒳\u{2060}꒪\u{2060})\u{2060}〜",
-        "vibing",
-    ),
-    ("( ◡̀_◡́)ᕤ", "strong flex"),
-    ("=͟͟͞͞(꒪ᗜ꒪‧̣̥̇)", "dead"),
-    ("=͟͟͞͞(ㅎ.ㅎ‧̣̥̇)", "relieved"),
-    ("˶ˊᜊˋ˶", "singing"),
-    ("𓆝 ⋆｡𖦹°‧🫧", "fih."),
-    ("꒰⑅ᵕ༚ᵕ꒱˖", "happy blushing"),
-    ("ꉂ(˵˃ ᗜ ˂˵)", "happy laugh"),
-    ("(˶°▄°˶)", "skeptical"),
-    ("(｡ᵕ °ㅁ° ).ᐟ.ᐟ.ᐟ", "shocked"),
-    ("ᕙ(  •̀ ᗜ •́  )ᕗ", "strong flex"),
-    ("✧｡◝(ᵔᗜᵔ)◜✧*｡", "happy excited"),
-    ("♡⸜(ˆᗜˆ˵ )⸝♡", "love"),
-    ("～◖(˘▾˘)◗～", "listening to music"),
-];
-
-const COMMON_NERD_NAMES: &[&str] = &[
-    "cod hubot",
-    "md folder",
-    "md git",
-    "oct zap",
-    "md chart bar",
-    "cod credit card",
-    "md timer",
-    "md target",
-    "md rocket launch",
-    "seti code",
-];
-
-const COMMON_UNICODE: &[(&str, &str)] = &[
-    ("●", "Black Circle"),
-    ("◆", "Black Diamond"),
-    ("★", "Black Star"),
-    ("→", "Rightwards Arrow"),
-    ("│", "Box Drawings Light Vertical"),
-    ("■", "Black Square"),
-    ("▲", "Black Up-Pointing Triangle"),
-    ("○", "White Circle"),
-    ("✦", "Black Four Pointed Star"),
-    ("⟩", "Mathematical Right Angle Bracket"),
-    ("·", "Middle Dot"),
-    ("»", "Right-Pointing Double Angle Quotation Mark"),
-    ("✓", "Check Mark"),
-    ("✗", "Ballot X"),
-];
-
 const UNICODE_SEARCH_LIMIT: usize = 200;
 
 /// Number of recent unicode queries kept in the LRU. Covers typing across a
@@ -147,41 +48,38 @@ impl IconCatalogData {
     pub fn load() -> Self {
         let emoji_sections = vec![
             IconSection {
-                title: "Common Emoji",
+                title: "Common Emoji".to_string(),
                 entries: build_emoji_common(),
             },
             IconSection {
-                title: "All Emoji",
+                title: "All Emoji".to_string(),
                 entries: build_emoji_all(),
             },
         ];
 
         let kaomoji_sections = vec![IconSection {
-            title: "Kaomoji",
+            title: "Kaomoji".to_string(),
             entries: build_kaomoji(),
         }];
 
-        let unicode_browse_sections = vec![
-            IconSection {
-                title: "Common Unicode",
+        let unicode_browse_sections = {
+            let mut sections = vec![IconSection {
+                title: "Common Unicode".to_string(),
                 entries: build_unicode_common(),
-            },
-            build_unicode_range("Box Drawing", 0x2500..=0x259F),
-            build_unicode_range("Geometric Shapes", 0x25A0..=0x25FF),
-            build_unicode_range("Arrows", 0x2190..=0x21FF),
-            build_unicode_range("Mathematical Operators", 0x2200..=0x22FF),
-            build_unicode_range("Dingbats", 0x2700..=0x27BF),
-        ];
+            }];
+            sections.extend(load_unicode_ranges());
+            sections
+        };
 
         let nerd_all_raw = nerd_fonts::load();
         let (nerd_common, nerd_all) = build_nerd_sections(&nerd_all_raw);
         let nerd_sections = vec![
             IconSection {
-                title: "Common Nerd Font",
+                title: "Common Nerd Font".to_string(),
                 entries: nerd_common,
             },
             IconSection {
-                title: "All Nerd Font",
+                title: "All Nerd Font".to_string(),
                 entries: nerd_all,
             },
         ];
@@ -270,7 +168,7 @@ fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionV
                 None
             } else {
                 Some(SectionView {
-                    title: section.title,
+                    title: &section.title,
                     entries,
                 })
             }
@@ -287,14 +185,15 @@ fn make_entry(icon: String, name: String) -> IconEntry {
 }
 
 fn build_emoji_common() -> Vec<IconEntry> {
-    COMMON_EMOJI
+    let raw = include_str!("emoji.json");
+    let val: Value = serde_json::from_str(raw).expect("invalid emoji.json");
+    let common = val["common"].as_array().expect("emoji.json: missing 'common'");
+    common
         .iter()
+        .filter_map(|v| v.as_str())
         .filter_map(|s| {
             let emoji = emojis::get(s)?;
-            Some(make_entry(
-                emoji.as_str().to_string(),
-                emoji.name().to_string(),
-            ))
+            Some(make_entry(emoji.as_str().to_string(), emoji.name().to_string()))
         })
         .collect()
 }
@@ -306,21 +205,54 @@ fn build_emoji_all() -> Vec<IconEntry> {
 }
 
 fn build_kaomoji() -> Vec<IconEntry> {
-    COMMON_KAOMOJI
+    let raw = include_str!("kaomoji.json");
+    let entries: Vec<Value> = serde_json::from_str(raw).expect("invalid kaomoji.json");
+    entries
         .iter()
-        .map(|&(icon, name)| make_entry(icon.to_string(), name.to_string()))
+        .filter_map(|v| {
+            let icon = v.get("icon")?.as_str()?;
+            let name = v.get("name")?.as_str()?;
+            Some(make_entry(icon.to_string(), name.to_string()))
+        })
         .collect()
 }
 
 fn build_unicode_common() -> Vec<IconEntry> {
-    COMMON_UNICODE
+    let raw = include_str!("unicode.json");
+    let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
+    let common = val["common"].as_array().expect("unicode.json: missing 'common'");
+    common
         .iter()
-        .filter_map(|(icon, _)| icon.chars().next())
+        .filter_map(|v| v.as_str())
+        .filter_map(|s| s.chars().next())
         .filter_map(make_named_unicode_entry)
         .collect()
 }
 
-fn build_unicode_range(title: &'static str, range: std::ops::RangeInclusive<u32>) -> IconSection {
+fn load_unicode_ranges() -> Vec<IconSection> {
+    let raw = include_str!("unicode.json");
+    let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
+    let ranges = val["ranges"].as_array().expect("unicode.json: missing 'ranges'");
+    ranges
+        .iter()
+        .filter_map(|v| {
+            let title = v.get("title")?.as_str()?.to_string();
+            let start = parse_hex(v.get("start")?.as_str()?)?;
+            let end = parse_hex(v.get("end")?.as_str()?)?;
+            Some(build_unicode_range(title, start..=end))
+        })
+        .collect()
+}
+
+fn parse_hex(s: &str) -> Option<u32> {
+    let hex = s
+        .strip_prefix("0x")
+        .or_else(|| s.strip_prefix("0X"))
+        .unwrap_or(s);
+    u32::from_str_radix(hex, 16).ok()
+}
+
+fn build_unicode_range(title: String, range: std::ops::RangeInclusive<u32>) -> IconSection {
     let entries = range
         .filter_map(char::from_u32)
         .filter_map(make_named_unicode_entry)
@@ -337,7 +269,7 @@ fn build_unicode_search_sections(query: &str) -> Vec<IconSection> {
     {
         seen.insert(ch);
         sections.push(IconSection {
-            title: "Exact Match",
+            title: "Exact Match".to_string(),
             entries: vec![entry],
         });
     }
@@ -346,7 +278,7 @@ fn build_unicode_search_sections(query: &str) -> Vec<IconSection> {
         let matches = scan_unicode_matches(query, &seen, UNICODE_SEARCH_LIMIT);
         if !matches.is_empty() {
             sections.push(IconSection {
-                title: "Unicode Matches",
+                title: "Unicode Matches".to_string(),
                 entries: matches,
             });
         }
@@ -446,16 +378,20 @@ fn make_unicode_entry(ch: char, allow_unnamed: bool) -> Option<IconEntry> {
 }
 
 fn build_nerd_sections(all: &[nerd_fonts::NerdFontGlyph]) -> (Vec<IconEntry>, Vec<IconEntry>) {
-    let common: Vec<IconEntry> = COMMON_NERD_NAMES
+    let raw = include_str!("common_nerd.json");
+    let common_names: Vec<String> =
+        serde_json::from_str(raw).expect("invalid common_nerd.json");
+
+    let common = common_names
         .iter()
-        .filter_map(|prefix| {
+        .filter_map(|name| {
             all.iter()
-                .find(|glyph| glyph.name == *prefix)
+                .find(|glyph| &glyph.name == name)
                 .map(|glyph| make_entry(glyph.icon.clone(), glyph.name.clone()))
         })
         .collect();
 
-    let all_entries: Vec<IconEntry> = all
+    let all_entries = all
         .iter()
         .map(|glyph| make_entry(glyph.icon.clone(), glyph.name.clone()))
         .collect();
