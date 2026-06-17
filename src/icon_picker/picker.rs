@@ -5,7 +5,7 @@ use super::{
 use crate::theme;
 use ratatui::{
     Frame,
-    layout::{Alignment, Constraint, Layout, Rect},
+    layout::{Alignment, Constraint, HorizontalAlignment, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph},
@@ -176,7 +176,7 @@ pub fn click_tab(state: &mut IconPickerState, x: u16, y: u16) -> bool {
 pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &IconCatalogData) {
     let outer = Block::default()
         .title(Span::styled(
-            " Icon Picker ",
+            " laTUIcon",
             Style::default()
                 .fg(theme::AMBER_GLOW())
                 .add_modifier(Modifier::BOLD),
@@ -186,6 +186,8 @@ pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &Icon
     f.render_widget(outer, area);
 
     let layout = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(1),
         Constraint::Length(3),
         Constraint::Length(1),
         Constraint::Min(3),
@@ -193,10 +195,23 @@ pub fn render(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &Icon
     ])
     .split(inner);
 
-    render_tabs(f, layout[0], state);
-    render_search(f, layout[1], state);
-    render_icon_list(f, layout[2], state, catalog);
-    render_footer(f, layout[3]);
+    render_subtitle(f, layout[0]);
+    // layout[1] is the margin above the tabs block
+    render_tabs(f, layout[2], state);
+    render_search(f, layout[3], state);
+    render_icon_list(f, layout[4], state, catalog);
+    render_footer(f, layout[5]);
+}
+
+fn render_subtitle(f: &mut Frame, area: Rect) {
+    f.render_widget(
+        Paragraph::new(Span::styled(
+            "\"The late.sh icon picker\"",
+            Style::default().fg(theme::TEXT_DIM()),
+        ))
+        .alignment(Alignment::Center),
+        area,
+    );
 }
 
 fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
@@ -221,6 +236,22 @@ fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
         ));
     }
 
+    // Shrink the block to fit content and center it horizontally.
+    let content_width = TAB_STRIP_LEAD
+        + IconPickerTab::ALL
+            .iter()
+            .map(|t| tab_cell_width(t.label()))
+            .sum::<u16>()
+        + (IconPickerTab::ALL.len() as u16 - 1) * TAB_STRIP_GAP;
+
+    let block_width = (content_width + 2).min(area.width); // +2 for left/right border
+    let block_x = area.x + area.width.saturating_sub(block_width) / 2;
+    let block_area = Rect {
+        x: block_x,
+        width: block_width,
+        ..area
+    };
+
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -229,24 +260,38 @@ fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
             " icon set ",
             Style::default().fg(theme::TEXT_DIM()),
         ));
-    let inner = block.inner(area);
+    let inner = block.inner(block_area);
     state.tabs_inner.set(inner);
-    f.render_widget(Paragraph::new(Line::from(spans)).block(block), area);
+    f.render_widget(Paragraph::new(Line::from(spans)).block(block), block_area);
 }
 
 fn render_search(f: &mut Frame, area: Rect, state: &IconPickerState) {
-    use ratatui::layout::{Constraint, Layout};
+    let areas = Layout::horizontal([
+        Constraint::Length(4),
+        Constraint::Fill(1),
+        Constraint::Length(4),
+    ])
+    .split(area);
+    let center = areas[1];
 
     let prompt = Paragraph::new(Line::from(vec![
-        Span::styled("  search ", Style::default().fg(theme::TEXT_DIM())),
+        Span::styled("search ", Style::default().fg(theme::TEXT_DIM())),
         Span::styled("› ", Style::default().fg(theme::AMBER_DIM())),
     ]));
-    let split = Layout::horizontal([Constraint::Length(11), Constraint::Fill(1)]).split(area);
+    let split = Layout::horizontal([Constraint::Length(9), Constraint::Fill(1)]).split(center);
     f.render_widget(prompt, split[0]);
     f.render_widget(&state.search_query, split[1]);
 }
 
 fn render_icon_list(f: &mut Frame, area: Rect, state: &IconPickerState, catalog: &IconCatalogData) {
+    let areas = Layout::horizontal([
+        Constraint::Length(4),
+        Constraint::Fill(1),
+        Constraint::Length(4),
+    ])
+    .split(area);
+    let area = areas[1];
+
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -405,7 +450,10 @@ fn render_footer(f: &mut Frame, area: Rect) {
         .border_style(Style::default().fg(theme::BORDER_DIM()));
     let inner = block.inner(area);
     f.render_widget(block, area);
-    f.render_widget(Paragraph::new(Line::from(spans)), inner);
+    f.render_widget(
+        Paragraph::new(Line::from(spans)).alignment(HorizontalAlignment::Center),
+        inner,
+    );
 }
 
 fn apply_scroll_in_sections(state: &mut IconPickerState, sections: &[SectionView<'_>]) {
