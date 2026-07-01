@@ -1,0 +1,46 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+
+  clippy:
+    name: run clippy lints
+    runs-on: ubuntu-latest
+    steps:
+       - uses: actions/checkout@v4
+       - uses: dtolnay/rust-toolchain@master
+         with:
+           toolchain: stable
+           components: clippy
+       - name: run clippy lints
+         run: cargo clippy
+
+  fmt:
+    name: run rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: run rustfmt
+        run: cargo fmt --all -- --check
