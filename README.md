@@ -1,8 +1,10 @@
 # 😴 latuicon
 
-`latuicon`, the **lat**e **TUI** **icon** picker.
+`latuicon`, the **lat**e **TUI** **icon** picker: a rip-off of the [late.sh](https://github.com/mpiorowski/late-sh) embedded icon picker.
 
-<img width="1007" height="808" alt="demo" src="https://github.com/user-attachments/assets/5946233c-672c-4f2f-8025-c7a02a665a15" />
+<p align="center">
+    <img width="694" height="692" alt="latuicon-demo" src="https://github.com/user-attachments/assets/62ee3bb8-5870-4f97-96b0-d5571e64fea0" />
+</p>
 
 A terminal UI icon picker for emoji, kaomoji, Unicode characters, and Nerd Font glyphs. Press Enter to print the selected icon to stdout; press Esc to exit without output.
 
@@ -41,6 +43,36 @@ ICON_PICKER_THEME=dracula latuicon
 
 Prints the chosen icon to stdout on confirm, nothing on Esc/Ctrl+C.
 
+### Desktop integration example ([Hyprland](https://hypr.land/))
+
+In my setup, I use [`floatty.sh`](https://github.com/coko7/scripts/blob/main/global/floatty.sh) to open `latuicon` in a floating terminal window and pipe the result to the clipboard. Here is my custom Hyprland binding for it:
+
+```ini
+bindd = $mainMod, comma, laTUIcon icon picker, exec, FLOATTY_CAPTURE_OUTPUT=1 bash floatty.sh latuicon latuicon | wl-copy
+```
+
+And these are the Hyprland window rules for it:
+
+```ini
+# Special rules for floating/prompt terminals
+windowrule {
+    name = floater-kitty
+    match:class = ^(floater-kitty-.*)$
+    no_anim = on
+    float = on
+    center = on
+    size = 1000 800
+}
+
+windowrule {
+  name = floater-kitty-latuicon
+  match:class = floater-kitty-latuicon
+  size = 700 700
+}
+```
+
+Pressing `$mainMod + ,` opens a floating terminal with the picker; confirming an icon copies it straight to the Wayland clipboard.
+
 ## Keybindings
 
 | Key | Action |
@@ -73,4 +105,6 @@ Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+
 
 ## Credits
 
-The project was seeded from the icon-picker component of [late.sh](https://github.com/mpiorowski/late-sh) by [@mpiorowski](https://github.com/mpiorowski) at commit [6c670683](https://github.com/mpiorowski/late-sh/commit/6c670683e301cbef3df08683c84bc91141a0faee). Code written after the initial commit is not derived from that project.
+The project was seeded from the icon-picker component of [late.sh](https://github.com/mpiorowski/late-sh) at commit [6c670683](https://github.com/mpiorowski/late-sh/commit/6c670683e301cbef3df08683c84bc91141a0faee). Code written after the initial commit is not derived from that project.
+
+The original icon picker was written by [@mevanlc](https://github.com/mevanlc); the late.sh project is maintained by [@mpiorowski](https://github.com/mpiorowski).
