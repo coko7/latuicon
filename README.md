@@ -108,3 +108,5 @@ Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+
 The project was seeded from the icon-picker component of [late.sh](https://github.com/mpiorowski/late-sh) at commit [6c670683](https://github.com/mpiorowski/late-sh/commit/6c670683e301cbef3df08683c84bc91141a0faee). Code written after the initial commit is not derived from that project.
 
 The original icon picker was written by [@mevanlc](https://github.com/mevanlc); the late.sh project is maintained by [@mpiorowski](https://github.com/mpiorowski).
+
+See [`THIRD_PARTY_LICENSES.md`](./THIRD_PARTY_LICENSES.md) for the license covering the derived code from the initial commit.
