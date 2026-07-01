@@ -161,7 +161,7 @@ fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionV
                 section
                     .entries
                     .iter()
-                    .filter(|entry| entry.name_lower.contains(&query_lower))
+                    .filter(|entry| fuzzy_match(&entry.name_lower, &query_lower))
                     .collect()
             };
             if entries.is_empty() {
@@ -176,6 +176,67 @@ fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionV
         .collect()
 }
 
+/// Returns true if `name` matches `query` — exact substring first, then
+/// word-level Levenshtein so that small typos still find the right icon.
+fn fuzzy_match(name: &str, query: &str) -> bool {
+    if name.contains(query) {
+        return true;
+    }
+
+    let query_words: Vec<&str> = query.split_whitespace().collect();
+    if query_words.is_empty() {
+        return true;
+    }
+
+    let name_words: Vec<&str> = name.split_whitespace().collect();
+    query_words
+        .iter()
+        .all(|qw| name_words.iter().any(|nw| word_match(qw, nw)))
+}
+
+/// A query word matches a name word if it is a substring of it, or the
+/// Levenshtein edit distance is within a length-based tolerance.
+fn word_match(query_word: &str, name_word: &str) -> bool {
+    if name_word.contains(query_word) {
+        return true;
+    }
+
+    let max_dist: usize = match query_word.len() {
+        0..=2 => 0,
+        3..=5 => 1,
+        _ => 2,
+    };
+
+    if query_word.len().abs_diff(name_word.len()) > max_dist {
+        return false;
+    }
+
+    levenshtein(query_word, name_word) <= max_dist
+}
+
+/// Single-row DP Levenshtein distance between two strings.
+fn levenshtein(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    let (m, n) = (a.len(), b.len());
+    let mut row: Vec<usize> = (0..=n).collect();
+
+    for i in 1..=m {
+        let mut prev = row[0];
+        row[0] = i;
+        for j in 1..=n {
+            let old = row[j];
+            row[j] = if a[i - 1] == b[j - 1] {
+                prev
+            } else {
+                1 + prev.min(row[j]).min(row[j - 1])
+            };
+            prev = old;
+        }
+    }
+    row[n]
+}
+
 fn make_entry(icon: String, name: String) -> IconEntry {
     IconEntry {
         icon,
@@ -187,13 +248,18 @@ fn make_entry(icon: String, name: String) -> IconEntry {
 fn build_emoji_common() -> Vec<IconEntry> {
     let raw = include_str!("../../data/emoji.json");
     let val: Value = serde_json::from_str(raw).expect("invalid emoji.json");
-    let common = val["common"].as_array().expect("emoji.json: missing 'common'");
+    let common = val["common"]
+        .as_array()
+        .expect("emoji.json: missing 'common'");
     common
         .iter()
         .filter_map(|v| v.as_str())
         .filter_map(|s| {
             let emoji = emojis::get(s)?;
-            Some(make_entry(emoji.as_str().to_string(), emoji.name().to_string()))
+            Some(make_entry(
+                emoji.as_str().to_string(),
+                emoji.name().to_string(),
+            ))
         })
         .collect()
 }
@@ -220,7 +286,9 @@ fn build_kaomoji() -> Vec<IconEntry> {
 fn build_unicode_common() -> Vec<IconEntry> {
     let raw = include_str!("../../data/unicode.json");
     let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
-    let common = val["common"].as_array().expect("unicode.json: missing 'common'");
+    let common = val["common"]
+        .as_array()
+        .expect("unicode.json: missing 'common'");
     common
         .iter()
         .filter_map(|v| v.as_str())
@@ -232,7 +300,9 @@ fn build_unicode_common() -> Vec<IconEntry> {
 fn load_unicode_ranges() -> Vec<IconSection> {
     let raw = include_str!("../../data/unicode.json");
     let val: Value = serde_json::from_str(raw).expect("invalid unicode.json");
-    let ranges = val["ranges"].as_array().expect("unicode.json: missing 'ranges'");
+    let ranges = val["ranges"]
+        .as_array()
+        .expect("unicode.json: missing 'ranges'");
     ranges
         .iter()
         .filter_map(|v| {
@@ -379,8 +449,7 @@ fn make_unicode_entry(ch: char, allow_unnamed: bool) -> Option<IconEntry> {
 
 fn build_nerd_sections(all: &[nerd_fonts::NerdFontGlyph]) -> (Vec<IconEntry>, Vec<IconEntry>) {
     let raw = include_str!("../../data/common_nerd.json");
-    let common_names: Vec<String> =
-        serde_json::from_str(raw).expect("invalid common_nerd.json");
+    let common_names: Vec<String> = serde_json::from_str(raw).expect("invalid common_nerd.json");
 
     let common = common_names
         .iter()
