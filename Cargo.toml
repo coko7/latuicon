@@ -2,6 +2,14 @@
 name = "latuicon"
 version = "0.1.0"
 edition = "2024"
+description = "A terminal UI icon picker for emoji, kaomoji, Unicode characters, and Nerd Font glyphs"
+repository = "https://github.com/coko7/latuicon"
+authors = ["Coko <91132775+Coko7@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+keywords = ["tui", "icon-picker", "emoji", "terminal", "nerd-font"]
+categories = ["command-line-utilities"]
+exclude = ["scripts/", "target/"]
 
 [[bin]]
 name = "latuicon"
