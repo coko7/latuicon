@@ -6,6 +6,13 @@
     <img width="694" height="692" alt="latuicon-demo" src="https://github.com/user-attachments/assets/62ee3bb8-5870-4f97-96b0-d5571e64fea0" />
 </p>
 
+<p align="center">
+    <a href="https://crates.io/crates/latuicon"><img src="https://img.shields.io/crates/v/latuicon.svg" alt="Crates info"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/coko7/latuicon?color=blue" alt="License: MIT"></a>
+    <img src="https://img.shields.io/github/languages/top/coko7/latuicon?color=orange" alt="Rust">
+    <a href="https://github.com/coko7/latuicon/actions/workflows/rust.yml"><img src="https://github.com/coko7/latuicon/actions/workflows/rust.yml/badge.svg" alt="Tests"></a>
+</p>
+
 A terminal UI icon picker for emoji, kaomoji, Unicode characters, and Nerd Font glyphs. Press Enter to print the selected icon to stdout; press Esc to exit without output.
 
 ## What's different from late.sh
@@ -26,6 +33,12 @@ icon=$(latuicon)
 ```
 
 ## Install
+
+```sh
+cargo install latuicon
+```
+
+### From source
 
 ```sh
 ./scripts/deploy.sh
