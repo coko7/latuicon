@@ -31,6 +31,7 @@ struct CachedUnicodeQuery {
 }
 
 pub struct IconCatalogData {
+    all_sections: Vec<IconSection>,
     emoji_sections: Vec<IconSection>,
     kaomoji_sections: Vec<IconSection>,
     unicode_browse_sections: Vec<IconSection>,
@@ -84,7 +85,15 @@ impl IconCatalogData {
             },
         ];
 
+        let all_sections = build_all_sections(
+            &emoji_sections,
+            &kaomoji_sections,
+            &unicode_browse_sections,
+            &nerd_sections,
+        );
+
         Self {
+            all_sections,
             emoji_sections,
             kaomoji_sections,
             unicode_browse_sections,
@@ -100,6 +109,10 @@ impl IconCatalogData {
         f: impl FnOnce(&[SectionView<'_>]) -> R,
     ) -> R {
         match tab {
+            IconPickerTab::All => {
+                let sections = filter_sections(&self.all_sections, query);
+                f(&sections)
+            }
             IconPickerTab::Emoji => {
                 let sections = filter_sections(&self.emoji_sections, query);
                 f(&sections)
@@ -148,6 +161,40 @@ impl IconCatalogData {
             }
         }
     }
+}
+
+/// Concatenates every catalog into one combined set for the "All" tab,
+/// prefixing each section title with its category so headers stay
+/// distinguishable (e.g. "Emoji · Common Emoji").
+fn build_all_sections(
+    emoji_sections: &[IconSection],
+    kaomoji_sections: &[IconSection],
+    unicode_browse_sections: &[IconSection],
+    nerd_sections: &[IconSection],
+) -> Vec<IconSection> {
+    let mut sections = Vec::new();
+    sections.extend(prefixed_sections("Emoji", emoji_sections));
+    sections.extend(prefixed_sections("Kaomoji", kaomoji_sections));
+    sections.extend(prefixed_sections("Unicode", unicode_browse_sections));
+    sections.extend(prefixed_sections("Nerd Font", nerd_sections));
+    sections
+}
+
+fn prefixed_sections(category: &str, sections: &[IconSection]) -> Vec<IconSection> {
+    sections
+        .iter()
+        .map(|section| {
+            let title = if section.title.eq_ignore_ascii_case(category) {
+                section.title.clone()
+            } else {
+                format!("{category} · {}", section.title)
+            };
+            IconSection {
+                title,
+                entries: section.entries.clone(),
+            }
+        })
+        .collect()
 }
 
 fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionView<'a>> {
