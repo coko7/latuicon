@@ -111,6 +111,7 @@ Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+
 
 ## Tabs
 
+- **All** — every icon from every other tab, combined into one searchable set
 - **Emoji** — common emoji + full emoji set
 - **Kaomoji** — curated kaomoji collection
 - **Unicode** — common symbols + Box Drawing, Geometric Shapes, Arrows, Math Operators, Dingbats; search supports `U+XXXX` / `0xXXXX` hex lookup and full Unicode name scan
