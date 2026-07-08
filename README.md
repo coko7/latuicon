@@ -3,7 +3,7 @@
 `latuicon`, the **lat**e **TUI** **icon** picker: a rip-off of the [late.sh](https://github.com/mpiorowski/late-sh) embedded icon picker.
 
 <p align="center">
-    <img width="694" height="692" alt="latuicon-demo" src="https://github.com/user-attachments/assets/62ee3bb8-5870-4f97-96b0-d5571e64fea0" />
+    <img alt="latuicon-demo" src="assets/banner.webp" />
 </p>
 
 <p align="center">
@@ -13,7 +13,10 @@
     <a href="https://github.com/coko7/latuicon/actions/workflows/rust.yml"><img src="https://github.com/coko7/latuicon/actions/workflows/rust.yml/badge.svg" alt="Tests"></a>
 </p>
 
-A terminal UI icon picker for emoji, kaomoji, Unicode characters, and Nerd Font glyphs. Press Enter to print the selected icon to stdout; press Esc to exit without output.
+A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font](https://www.nerdfonts.com/) glyphs. Press Enter to print the selected icon to stdout; press Esc to exit without output.
+
+> [!TIP]
+> Want to use `latuicon` in Neovim? Check out the [`latuicon.nvim`](https://github.com/coko7/latuicon.nvim) wrapper plugin!
 
 ## What's different from late.sh
 
