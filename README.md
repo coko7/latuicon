@@ -41,6 +41,14 @@ icon=$(latuicon)
 cargo install latuicon
 ```
 
+### Arch Linux (AUR)
+
+Install the [`latuicon`](https://aur.archlinux.org/packages/latuicon) AUR package:
+
+```sh
+paru -S latuicon
+```
+
 ### From source
 
 ```sh
