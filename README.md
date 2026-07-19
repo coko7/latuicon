@@ -37,11 +37,25 @@ icon=$(latuicon)
 
 ## Install
 
+### Cargo
+
+Install the [`latuicon`](https://crates.io/crates/latuicon) bin crate:
+
 ```sh
 cargo install latuicon
 ```
 
-### From source
+### Arch Linux (AUR)
+
+Install the [`latuicon`](https://aur.archlinux.org/packages/latuicon) AUR package:
+
+```sh
+$ yay -S latuicon
+# or
+$ paru -S latuicon
+```
+
+### Build from source
 
 ```sh
 ./scripts/deploy.sh
@@ -92,7 +106,7 @@ Pressing `$mainMod + ,` opens a floating terminal with the picker; confirming an
 ## Keybindings
 
 | Key | Action |
-|-----|--------|
+| ----- | -------- |
 | `↑` / `↓` | Navigate list |
 | `Ctrl+K` / `Ctrl+J` | Navigate list (vi-style) |
 | `PgUp` / `PgDn` | Page up / down |
