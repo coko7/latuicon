@@ -17,9 +17,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --locked
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --locked
 
   clippy:
     name: run clippy lints
