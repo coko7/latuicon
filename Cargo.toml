@@ -1,6 +1,6 @@
 [package]
 name = "latuicon"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "A terminal UI icon picker for emoji, kaomoji, Unicode characters, and Nerd Font glyphs"
 repository = "https://github.com/coko7/latuicon"
