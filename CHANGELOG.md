@@ -11,9 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(readme)* mention AUR package
 - add lockfile
-- update README
+- update README to mention AUR package
 
 ## [0.1.1](https://github.com/coko7/latuicon/compare/v0.1.0...v0.1.1) - 2026-07-03
 
