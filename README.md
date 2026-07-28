@@ -37,6 +37,20 @@ icon=$(latuicon)
 
 ## Install
 
+### Nix
+
+Run without installing:
+
+```sh
+nix run github:coko7/latuicon
+```
+
+Or install it into your Nix profile:
+
+```sh
+nix profile add github:coko7/latuicon
+```
+
 ### Cargo
 
 Install the [`latuicon`](https://crates.io/crates/latuicon) bin crate:
@@ -62,6 +76,16 @@ $ paru -S latuicon
 ```
 
 Builds a release binary and installs it to `~/.local/bin/latuicon`.
+
+### Nix development environment
+
+The flake also provides the Rust toolchain, Clippy, rustfmt, and rust-analyzer for
+contributors:
+
+```sh
+nix develop
+nix flake check
+```
 
 ## Usage
 
