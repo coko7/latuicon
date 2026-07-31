@@ -2,6 +2,7 @@ pub mod catalog;
 pub mod nerd_fonts;
 pub mod picker;
 
+use clap::ValueEnum;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui_textarea::{CursorMove, Input, TextArea, WrapMode};
@@ -17,12 +18,13 @@ pub const DEFAULT_VISIBLE_HEIGHT: usize = 13;
 /// Max gap between two left-clicks (on the same item) to count as a double-click.
 pub const DOUBLE_CLICK_WINDOW_MS: u128 = 400;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum IconPickerTab {
     All,
     Emoji,
     Kaomoji,
     Unicode,
+    #[value(alias = "nerdfont", alias = "nerd")]
     NerdFont,
 }
 
@@ -88,6 +90,13 @@ impl Default for IconPickerState {
 }
 
 impl IconPickerState {
+    pub fn new(tab: IconPickerTab) -> Self {
+        Self {
+            tab,
+            ..Default::default()
+        }
+    }
+
     pub fn search_str(&self) -> String {
         self.search_query.lines().join("")
     }

@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use ratatui::style::Color;
 use std::cell::Cell;
 
@@ -106,7 +107,7 @@ const PALETTE_DRACULA: Palette = Palette {
     amber_glow: Color::Rgb(241, 250, 140),
 };
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Theme {
     Contrast,
     Late,
@@ -114,23 +115,6 @@ pub enum Theme {
     Mocha,
     Gruvbox,
     Dracula,
-}
-
-impl Theme {
-    pub fn from_str(s: &str) -> Self {
-        match s.trim().to_lowercase().as_str() {
-            "late" => Self::Late,
-            "purple" => Self::Purple,
-            "mocha" => Self::Mocha,
-            "gruvbox" => Self::Gruvbox,
-            "dracula" => Self::Dracula,
-            _ => Self::Contrast,
-        }
-    }
-
-    pub fn names() -> &'static [&'static str] {
-        &["contrast", "late", "purple", "mocha", "gruvbox", "dracula"]
-    }
 }
 
 thread_local! {

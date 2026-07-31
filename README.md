@@ -90,9 +90,12 @@ nix flake check
 ## Usage
 
 ```sh
-latuicon                          # default theme
+latuicon                          # default theme, opens on emoji tab
 latuicon --theme mocha            # specific theme
-ICON_PICKER_THEME=dracula latuicon
+LATUICON_THEME=dracula latuicon
+
+latuicon --tab unicode            # opens on a specific tab (all, emoji, kaomoji, unicode, nerd font)
+LATUICON_TAB=nerd latuicon
 ```
 
 Prints the chosen icon to stdout on confirm, nothing on Esc/Ctrl+C.

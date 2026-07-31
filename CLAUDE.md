@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 cargo build --release          # compile optimized binary
 cargo run --release            # run with default theme
 cargo run --release -- --theme mocha  # run with a specific theme
-ICON_PICKER_THEME=dracula cargo run   # theme via env var
+LATUICON_THEME=dracula cargo run      # theme via env var
 cargo check                    # fast compile check
 cargo clippy                   # lint
 ```
@@ -23,11 +23,11 @@ There is no test suite. Use `cargo check` and `cargo clippy` to validate changes
 
 ## Architecture
 
-**tuicon** is a TUI icon-picker that lets users browse and select emoji, kaomoji, Unicode characters, and Nerd Font glyphs. The selected icon is printed to stdout on confirm.
+**latuicon** is a TUI icon-picker that lets users browse and select emoji, kaomoji, Unicode characters, and Nerd Font glyphs. The selected icon is printed to stdout on confirm.
 
 ### Key design: `/dev/tty` backend
 
-`main.rs` opens `/dev/tty` directly as the terminal backend instead of using stdin/stdout. This is intentional — it allows shell capture (`VAR=$(icon-picker)`) to work correctly because the TUI is isolated from the pipe.
+`main.rs` opens `/dev/tty` directly as the terminal backend instead of using stdin/stdout. This is intentional — it allows shell capture (`VAR=$(latuicon)`) to work correctly because the TUI is isolated from the pipe.
 
 ### State (`src/icon_picker/mod.rs`)
 
@@ -81,4 +81,4 @@ Filtering runs at render time via `filter_sections()` and resets `selected_index
 
 ### Theme system (`src/theme.rs`)
 
-Theme is stored in thread-local storage. Six palettes with hardcoded RGB values. Selected at startup via `--theme <name>` or `ICON_PICKER_THEME`; defaults to `contrast`.
+Theme is stored in thread-local storage. Six palettes with hardcoded RGB values. Selected at startup via `--theme <name>` or `LATUICON_THEME`; defaults to `contrast`.

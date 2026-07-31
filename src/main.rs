@@ -1,6 +1,7 @@
 mod icon_picker;
 mod theme;
 
+use clap::Parser;
 use crossterm::{
     event::{
         self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers, MouseButton,
@@ -14,11 +15,39 @@ use ratatui_textarea::{Input, Key};
 use std::{fs::OpenOptions, io};
 
 use icon_picker::catalog::IconCatalogData;
-use icon_picker::{IconPickerState, picker};
+use icon_picker::{IconPickerState, IconPickerTab, picker};
+
+/// interactive TUI icon/emoji/kaomoji picker
+///
+/// Prints the selected icon to stdout on Enter, nothing on Esc.
+/// Useful in shell scripts: VAR=$(latuicon)
+#[derive(Parser)]
+#[command(
+    name = "latuicon",
+    after_help = "KEYS:\n  \
+        ↑/↓          navigate list\n  \
+        PgUp/PgDn    page up/down\n  \
+        Ctrl+U/D     half-page up/down\n  \
+        Tab/S+Tab    switch icon tab\n  \
+        Enter        select and exit\n  \
+        Esc/Ctrl+C   exit without selecting\n  \
+        (type)       filter by name"
+)]
+struct Cli {
+    /// Color theme
+    #[arg(short = 't', long, env = "LATUICON_THEME", value_enum, default_value_t = theme::Theme::Contrast)]
+    theme: theme::Theme,
+
+    /// Icon tab shown on startup
+    #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum, default_value_t = IconPickerTab::Emoji)]
+    tab: IconPickerTab,
+}
 
 fn main() -> io::Result<()> {
-    let theme = parse_theme();
-    theme::set(theme);
+    let cli = Cli::parse();
+
+    theme::set(cli.theme);
+    let tab = cli.tab;
 
     let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
 
@@ -28,7 +57,7 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut state = IconPickerState::default();
+    let mut state = IconPickerState::new(tab);
     let catalog = IconCatalogData::load();
     let mut selected: Option<String> = None;
 
@@ -161,40 +190,3 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn parse_theme() -> theme::Theme {
-    let args: Vec<String> = std::env::args().collect();
-
-    let from_args = args
-        .windows(2)
-        .find(|w| w[0] == "--theme" || w[0] == "-t")
-        .map(|w| w[1].clone());
-
-    let name = from_args
-        .or_else(|| std::env::var("ICON_PICKER_THEME").ok())
-        .unwrap_or_default();
-
-    if name == "--help" || args.iter().any(|a| a == "--help" || a == "-h") {
-        eprintln!("icon-picker — interactive TUI icon/emoji/kaomoji picker");
-        eprintln!();
-        eprintln!("USAGE:");
-        eprintln!("  icon-picker [--theme <name>]");
-        eprintln!();
-        eprintln!("  Prints the selected icon to stdout on Enter, nothing on Esc.");
-        eprintln!("  Useful in shell scripts: VAR=$(icon-picker)");
-        eprintln!();
-        eprintln!("THEMES: {}", theme::Theme::names().join(", "));
-        eprintln!("  Also: ICON_PICKER_THEME=<name> icon-picker");
-        eprintln!();
-        eprintln!("KEYS:");
-        eprintln!("  ↑/↓          navigate list");
-        eprintln!("  PgUp/PgDn    page up/down");
-        eprintln!("  Ctrl+U/D     half-page up/down");
-        eprintln!("  Tab/S+Tab    switch icon tab");
-        eprintln!("  Enter        select and exit");
-        eprintln!("  Esc/Ctrl+C   exit without selecting");
-        eprintln!("  (type)       filter by name");
-        std::process::exit(0);
-    }
-
-    theme::Theme::from_str(&name)
-}
