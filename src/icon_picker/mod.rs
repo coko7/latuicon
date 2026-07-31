@@ -2,6 +2,7 @@ pub mod catalog;
 pub mod nerd_fonts;
 pub mod picker;
 
+use clap::ValueEnum;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui_textarea::{CursorMove, Input, TextArea, WrapMode};
@@ -17,12 +18,13 @@ pub const DEFAULT_VISIBLE_HEIGHT: usize = 13;
 /// Max gap between two left-clicks (on the same item) to count as a double-click.
 pub const DOUBLE_CLICK_WINDOW_MS: u128 = 400;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum IconPickerTab {
     All,
     Emoji,
     Kaomoji,
     Unicode,
+    #[value(alias = "nerdfont", alias = "nerd")]
     NerdFont,
 }
 
@@ -88,6 +90,13 @@ impl Default for IconPickerState {
 }
 
 impl IconPickerState {
+    pub fn new(tab: IconPickerTab) -> Self {
+        Self {
+            tab,
+            ..Default::default()
+        }
+    }
+
     pub fn search_str(&self) -> String {
         self.search_query.lines().join("")
     }
@@ -195,4 +204,42 @@ fn new_search_textarea() -> TextArea<'static> {
     ta.set_style(Style::default().fg(theme::TEXT_BRIGHT()));
     ta.set_wrap_mode(WrapMode::None);
     ta
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn next_and_prev_cycle_through_all_tabs_in_order() {
+        let mut tab = IconPickerTab::All;
+        for expected in &IconPickerTab::ALL[1..] {
+            tab = tab.next();
+            assert_eq!(tab, *expected);
+        }
+        // wraps back to the first tab
+        assert_eq!(tab.next(), IconPickerTab::All);
+    }
+
+    #[test]
+    fn prev_is_the_inverse_of_next() {
+        for tab in IconPickerTab::ALL {
+            assert_eq!(tab.next().prev(), tab);
+        }
+    }
+
+    #[test]
+    fn nerd_font_value_enum_accepts_documented_aliases() {
+        for alias in ["nerd-font", "nerdfont", "nerd", "NERD"] {
+            assert_eq!(
+                IconPickerTab::from_str(alias, true).unwrap(),
+                IconPickerTab::NerdFont
+            );
+        }
+    }
+
+    #[test]
+    fn from_str_rejects_unknown_tab() {
+        assert!(IconPickerTab::from_str("bogus", true).is_err());
+    }
 }

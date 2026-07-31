@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use ratatui::style::Color;
 use std::cell::Cell;
 
@@ -106,7 +107,7 @@ const PALETTE_DRACULA: Palette = Palette {
     amber_glow: Color::Rgb(241, 250, 140),
 };
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Theme {
     Contrast,
     Late,
@@ -114,23 +115,6 @@ pub enum Theme {
     Mocha,
     Gruvbox,
     Dracula,
-}
-
-impl Theme {
-    pub fn from_str(s: &str) -> Self {
-        match s.trim().to_lowercase().as_str() {
-            "late" => Self::Late,
-            "purple" => Self::Purple,
-            "mocha" => Self::Mocha,
-            "gruvbox" => Self::Gruvbox,
-            "dracula" => Self::Dracula,
-            _ => Self::Contrast,
-        }
-    }
-
-    pub fn names() -> &'static [&'static str] {
-        &["contrast", "late", "purple", "mocha", "gruvbox", "dracula"]
-    }
 }
 
 thread_local! {
@@ -210,4 +194,22 @@ pub fn AMBER_DIM() -> Color {
 #[allow(non_snake_case)]
 pub fn AMBER_GLOW() -> Color {
     current().amber_glow
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_str_accepts_every_declared_variant_case_insensitively() {
+        for variant in Theme::value_variants() {
+            let name = variant.to_possible_value().unwrap().get_name().to_string();
+            assert!(Theme::from_str(&name.to_uppercase(), true).is_ok());
+        }
+    }
+
+    #[test]
+    fn from_str_rejects_unknown_name() {
+        assert!(Theme::from_str("not-a-theme", true).is_err());
+    }
 }

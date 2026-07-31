@@ -514,3 +514,135 @@ fn build_nerd_sections(all: &[nerd_fonts::NerdFontGlyph]) -> (Vec<IconEntry>, Ve
 
     (common, all_entries)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn entry(name: &str) -> IconEntry {
+        make_entry("x".to_string(), name.to_string())
+    }
+
+    #[test]
+    fn filter_sections_empty_query_keeps_everything() {
+        let sections = vec![IconSection {
+            title: "A".to_string(),
+            entries: vec![entry("Fire"), entry("Water")],
+        }];
+        let views = filter_sections(&sections, "");
+        assert_eq!(views.len(), 1);
+        assert_eq!(views[0].entries.len(), 2);
+    }
+
+    #[test]
+    fn filter_sections_drops_sections_with_no_matches() {
+        let sections = vec![
+            IconSection {
+                title: "A".to_string(),
+                entries: vec![entry("Fire")],
+            },
+            IconSection {
+                title: "B".to_string(),
+                entries: vec![entry("Water")],
+            },
+        ];
+        let views = filter_sections(&sections, "fire");
+        assert_eq!(views.len(), 1);
+        assert_eq!(views[0].title, "A");
+    }
+
+    #[test]
+    fn filter_sections_matches_are_case_insensitive() {
+        let sections = vec![IconSection {
+            title: "A".to_string(),
+            entries: vec![entry("Grinning Face")],
+        }];
+        let views = filter_sections(&sections, "GRIN");
+        assert_eq!(views[0].entries.len(), 1);
+    }
+
+    #[test]
+    fn fuzzy_match_tolerates_a_small_typo() {
+        assert!(fuzzy_match("grinning face", "grining"));
+    }
+
+    #[test]
+    fn fuzzy_match_rejects_unrelated_query() {
+        assert!(!fuzzy_match("grinning face", "xyz"));
+    }
+
+    #[test]
+    fn word_match_accepts_substring_regardless_of_length() {
+        assert!(word_match("ab", "cab"));
+    }
+
+    #[test]
+    fn word_match_rejects_short_words_beyond_zero_edit_distance() {
+        assert!(!word_match("ab", "xy"));
+    }
+
+    #[test]
+    fn levenshtein_matches_known_distances() {
+        assert_eq!(levenshtein("kitten", "sitting"), 3);
+        assert_eq!(levenshtein("same", "same"), 0);
+    }
+
+    #[test]
+    fn parse_hex_accepts_0x_prefix_and_either_case() {
+        assert_eq!(parse_hex("0x1F600"), Some(0x1F600));
+        assert_eq!(parse_hex("0X1f600"), Some(0x1F600));
+        assert_eq!(parse_hex("1F600"), Some(0x1F600));
+        assert_eq!(parse_hex("not-hex"), None);
+    }
+
+    #[test]
+    fn parse_codepoint_query_accepts_u_plus_and_0x_forms() {
+        assert_eq!(parse_codepoint_query("U+1F600"), char::from_u32(0x1F600));
+        assert_eq!(parse_codepoint_query("u+1f600"), char::from_u32(0x1F600));
+        assert_eq!(parse_codepoint_query("0x41"), Some('A'));
+        assert_eq!(parse_codepoint_query("not-hex"), None);
+    }
+
+    #[test]
+    fn resolve_unicode_query_prefers_direct_char_then_codepoint() {
+        assert_eq!(resolve_unicode_query("A"), Some('A'));
+        assert_eq!(resolve_unicode_query("U+0041"), Some('A'));
+    }
+
+    #[test]
+    fn should_scan_unicode_names_skips_empty_and_single_char_queries() {
+        assert!(!should_scan_unicode_names(""));
+        assert!(!should_scan_unicode_names("a"));
+        assert!(should_scan_unicode_names("smile"));
+    }
+
+    #[test]
+    fn make_unicode_entry_rejects_control_characters() {
+        assert!(make_unicode_entry('\u{0007}', true).is_none());
+    }
+
+    #[test]
+    fn make_named_unicode_entry_requires_a_known_name() {
+        // U+E000 is in the Private Use Area and has no Unicode name.
+        let unnamed = char::from_u32(0xE000).unwrap();
+        assert!(make_named_unicode_entry(unnamed).is_none());
+        assert!(make_unicode_entry(unnamed, true).is_some());
+    }
+
+    #[test]
+    fn prefixed_sections_skips_redundant_category_title() {
+        let sections = vec![IconSection {
+            title: "Kaomoji".to_string(),
+            entries: vec![entry("x")],
+        }];
+        let out = prefixed_sections("Kaomoji", &sections);
+        assert_eq!(out[0].title, "Kaomoji");
+
+        let sections = vec![IconSection {
+            title: "Common Emoji".to_string(),
+            entries: vec![entry("x")],
+        }];
+        let out = prefixed_sections("Emoji", &sections);
+        assert_eq!(out[0].title, "Emoji · Common Emoji");
+    }
+}
