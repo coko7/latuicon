@@ -190,3 +190,38 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cli_defaults_to_contrast_theme_and_emoji_tab() {
+        let cli = Cli::parse_from(["latuicon"]);
+        assert_eq!(cli.theme, theme::Theme::Contrast);
+        assert_eq!(cli.tab, IconPickerTab::Emoji);
+    }
+
+    #[test]
+    fn cli_parses_theme_and_tab_flags() {
+        let cli = Cli::parse_from(["latuicon", "--theme", "mocha", "--tab", "unicode"]);
+        assert_eq!(cli.theme, theme::Theme::Mocha);
+        assert_eq!(cli.tab, IconPickerTab::Unicode);
+    }
+
+    #[test]
+    fn cli_accepts_short_flags_and_tab_alias() {
+        let cli = Cli::parse_from(["latuicon", "-t", "dracula", "-T", "nerd"]);
+        assert_eq!(cli.theme, theme::Theme::Dracula);
+        assert_eq!(cli.tab, IconPickerTab::NerdFont);
+    }
+
+    #[test]
+    fn cli_rejects_unknown_tab() {
+        assert!(Cli::try_parse_from(["latuicon", "--tab", "bogus"]).is_err());
+    }
+
+    #[test]
+    fn cli_rejects_unknown_theme() {
+        assert!(Cli::try_parse_from(["latuicon", "--theme", "bogus"]).is_err());
+    }
+}

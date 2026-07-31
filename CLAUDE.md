@@ -11,11 +11,12 @@ cargo run --release -- --theme mocha  # run with a specific theme
 LATUICON_THEME=dracula cargo run      # theme via env var
 cargo check                    # fast compile check
 cargo clippy                   # lint
+cargo test                     # run unit tests
 ```
 
 Available themes: `contrast` (default), `late`, `purple`, `mocha`, `gruvbox`, `dracula`.
 
-There is no test suite. Use `cargo check` and `cargo clippy` to validate changes.
+Unit tests live as `#[cfg(test)] mod tests` blocks at the bottom of the file they cover (no separate `tests/` dir). They cover pure logic only — index math in `picker.rs`, filtering/parsing in `catalog.rs`, `Theme`/`IconPickerTab` enum parsing — not rendering or the `/dev/tty` event loop, which need a real terminal.
 
 ## Build Script Dependency
 

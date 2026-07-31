@@ -107,7 +107,7 @@ const PALETTE_DRACULA: Palette = Palette {
     amber_glow: Color::Rgb(241, 250, 140),
 };
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Theme {
     Contrast,
     Late,
@@ -194,4 +194,22 @@ pub fn AMBER_DIM() -> Color {
 #[allow(non_snake_case)]
 pub fn AMBER_GLOW() -> Color {
     current().amber_glow
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_str_accepts_every_declared_variant_case_insensitively() {
+        for variant in Theme::value_variants() {
+            let name = variant.to_possible_value().unwrap().get_name().to_string();
+            assert!(Theme::from_str(&name.to_uppercase(), true).is_ok());
+        }
+    }
+
+    #[test]
+    fn from_str_rejects_unknown_name() {
+        assert!(Theme::from_str("not-a-theme", true).is_err());
+    }
 }
