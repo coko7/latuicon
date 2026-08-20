@@ -1,3 +1,5 @@
+
+
 # 😴 latuicon
 
 `latuicon`, the **lat**e **TUI** **icon** picker: a rip-off of the [late.sh](https://github.com/mpiorowski/late-sh) embedded icon picker.
@@ -147,7 +149,7 @@ Pressing `$mainMod + ,` opens a floating terminal with the picker; confirming an
 | Double-click | Select and exit |
 | Scroll wheel | Scroll list |
 
-Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+B`, `Ctrl+W`, `Ctrl+Y`, etc.).
+Search supports emacs-style editing and cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+B`, `Ctrl+W`, `Ctrl+Y`, etc.).
 
 ## Themes
 
