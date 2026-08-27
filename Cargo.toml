@@ -25,3 +25,5 @@ emojis = "0.7"
 unicode_names2 = "2"
 serde_json = "1"
 clap = { version = "4", features = ["derive", "env"] }
+toml = "1.1.4"
+serde = { version = "1.0.229", features = ["derive"] }

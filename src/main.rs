@@ -1,3 +1,4 @@
+mod config;
 mod icon_picker;
 mod theme;
 
@@ -12,7 +13,10 @@ use crossterm::{
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_textarea::{Input, Key};
+use std::path::PathBuf;
 use std::{fs::OpenOptions, io};
+
+use config::Config;
 
 use icon_picker::catalog::IconCatalogData;
 use icon_picker::{IconPickerState, IconPickerTab, picker};
@@ -34,20 +38,33 @@ use icon_picker::{IconPickerState, IconPickerTab, picker};
         (type)       filter by name"
 )]
 struct Cli {
-    /// Color theme
-    #[arg(short = 't', long, env = "LATUICON_THEME", value_enum, default_value_t = theme::Theme::Contrast)]
-    theme: theme::Theme,
+    /// Color theme (overrides config file)
+    #[arg(short = 't', long, env = "LATUICON_THEME", value_enum)]
+    theme: Option<theme::Theme>,
 
-    /// Icon tab shown on startup
-    #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum, default_value_t = IconPickerTab::Emoji)]
-    tab: IconPickerTab,
+    /// Icon tab shown on startup (overrides config file)
+    #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum)]
+    tab: Option<IconPickerTab>,
+
+    /// Path to config file (defaults to $XDG_CONFIG_HOME/latuicon/config.toml,
+    /// or ~/.config/latuicon/config.toml)
+    #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
+    config: Option<PathBuf>,
 }
+
+/// Default theme when unset by CLI flag, env var, and config file.
+const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
+/// Default startup tab when unset by CLI flag, env var, and config file.
+const DEFAULT_TAB: IconPickerTab = IconPickerTab::Emoji;
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
+    let config = Config::load(cli.config.as_deref());
 
-    theme::set(cli.theme);
-    let tab = cli.tab;
+    let theme = cli.theme.or(config.theme).unwrap_or(DEFAULT_THEME);
+    let tab = cli.tab.or(config.default_tab).unwrap_or(DEFAULT_TAB);
+
+    theme::set(theme);
 
     let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
 
@@ -195,24 +212,47 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cli_defaults_to_contrast_theme_and_emoji_tab() {
-        let cli = Cli::parse_from(["latuicon"]);
-        assert_eq!(cli.theme, theme::Theme::Contrast);
-        assert_eq!(cli.tab, IconPickerTab::Emoji);
+    fn cli_leaves_theme_and_tab_unset_when_omitted() {
+        let cli = Cli::try_parse_from(["latuicon"]).unwrap();
+        assert_eq!(cli.theme, None);
+        assert_eq!(cli.tab, None);
     }
 
     #[test]
     fn cli_parses_theme_and_tab_flags() {
         let cli = Cli::parse_from(["latuicon", "--theme", "mocha", "--tab", "unicode"]);
-        assert_eq!(cli.theme, theme::Theme::Mocha);
-        assert_eq!(cli.tab, IconPickerTab::Unicode);
+        assert_eq!(cli.theme, Some(theme::Theme::Mocha));
+        assert_eq!(cli.tab, Some(IconPickerTab::Unicode));
     }
 
     #[test]
     fn cli_accepts_short_flags_and_tab_alias() {
         let cli = Cli::parse_from(["latuicon", "-t", "dracula", "-T", "nerd"]);
-        assert_eq!(cli.theme, theme::Theme::Dracula);
-        assert_eq!(cli.tab, IconPickerTab::NerdFont);
+        assert_eq!(cli.theme, Some(theme::Theme::Dracula));
+        assert_eq!(cli.tab, Some(IconPickerTab::NerdFont));
+    }
+
+    #[test]
+    fn resolved_theme_and_tab_fall_back_through_cli_config_default() {
+        // CLI flag wins over config.
+        assert_eq!(
+            Some(theme::Theme::Dracula).or(Some(theme::Theme::Mocha)),
+            Some(theme::Theme::Dracula)
+        );
+        // Config wins over the built-in default when CLI is unset.
+        assert_eq!(
+            None.or(Some(theme::Theme::Mocha)).unwrap_or(DEFAULT_THEME),
+            theme::Theme::Mocha
+        );
+        // Built-in default applies when neither CLI nor config set it.
+        assert_eq!(
+            None::<theme::Theme>.or(None).unwrap_or(DEFAULT_THEME),
+            DEFAULT_THEME
+        );
+        assert_eq!(
+            None::<IconPickerTab>.or(None).unwrap_or(DEFAULT_TAB),
+            DEFAULT_TAB
+        );
     }
 
     #[test]
