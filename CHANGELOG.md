@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5](https://github.com/coko7/latuicon/compare/v0.1.4...v0.1.5) - 2026-08-27
+
+### Added
+
+- add support for persistent file config ([#12](https://github.com/coko7/latuicon/pull/12))
+
+### Other
+
+- update README
+
 ## [0.1.4](https://github.com/coko7/latuicon/compare/v0.1.3...v0.1.4) - 2026-07-31
 
 ### Added
