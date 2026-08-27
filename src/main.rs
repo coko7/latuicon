@@ -38,29 +38,31 @@ use icon_picker::{IconPickerState, IconPickerTab, picker};
         (type)       filter by name"
 )]
 struct Cli {
-    /// Color theme (overrides config file)
+    /// Color theme
     #[arg(short = 't', long, env = "LATUICON_THEME", value_enum)]
     theme: Option<theme::Theme>,
 
-    /// Icon tab shown on startup (overrides config file)
+    /// Icon tab shown on startup
     #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum)]
     tab: Option<IconPickerTab>,
 
-    /// Path to config file (defaults to the OS config dir, e.g.
-    /// ~/.config/latuicon/config.toml on Linux, %APPDATA%\latuicon\config.toml
-    /// on Windows, ~/Library/Application Support/latuicon/config.toml on macOS)
+    /// Path to config file
     #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
     config: Option<PathBuf>,
 }
 
-/// Default theme when unset by CLI flag, env var, and config file.
 const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
-/// Default startup tab when unset by CLI flag, env var, and config file.
 const DEFAULT_TAB: IconPickerTab = IconPickerTab::Emoji;
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
-    let config = Config::load(cli.config.as_deref());
+    let config = match Config::load(cli.config.as_deref()) {
+        Ok(config) => config,
+        Err(err) => {
+            eprintln!("latuicon: error: {err}");
+            std::process::exit(1);
+        }
+    };
 
     let theme = cli.theme.or(config.theme).unwrap_or(DEFAULT_THEME);
     let tab = cli.tab.or(config.default_tab).unwrap_or(DEFAULT_TAB);
