@@ -1,5 +1,5 @@
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::{env, fs};
 
 use clap::ValueEnum;
 use serde::{Deserialize, Deserializer};
@@ -51,16 +51,12 @@ impl Config {
     }
 }
 
-/// `$XDG_CONFIG_HOME/latuicon/config.toml`, falling back to
-/// `~/.config/latuicon/config.toml` when `XDG_CONFIG_HOME` is unset/empty.
+/// Per-OS config directory, joined with `latuicon/config.toml`:
+/// `$XDG_CONFIG_HOME/latuicon` (or `~/.config/latuicon`) on Linux,
+/// `~/Library/Application Support/latuicon` on macOS,
+/// `%APPDATA%\latuicon` on Windows.
 fn default_path() -> PathBuf {
-    let config_home = env::var("XDG_CONFIG_HOME")
-        .ok()
-        .filter(|dir| !dir.is_empty())
-        .map(PathBuf::from)
-        .or_else(|| env::var("HOME").ok().map(|home| PathBuf::from(home).join(".config")));
-
-    match config_home {
+    match dirs::config_dir() {
         Some(dir) => dir.join("latuicon").join("config.toml"),
         None => PathBuf::from("latuicon.toml"),
     }

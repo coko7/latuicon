@@ -46,8 +46,9 @@ struct Cli {
     #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum)]
     tab: Option<IconPickerTab>,
 
-    /// Path to config file (defaults to $XDG_CONFIG_HOME/latuicon/config.toml,
-    /// or ~/.config/latuicon/config.toml)
+    /// Path to config file (defaults to the OS config dir, e.g.
+    /// ~/.config/latuicon/config.toml on Linux, %APPDATA%\latuicon\config.toml
+    /// on Windows, ~/Library/Application Support/latuicon/config.toml on macOS)
     #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
     config: Option<PathBuf>,
 }
