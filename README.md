@@ -18,22 +18,21 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
 > [!TIP]
 > Want to use `latuicon` in Neovim? Check out the [`latuicon.nvim`](https://github.com/coko7/latuicon.nvim) wrapper plugin!
 
-## What's different from late.sh
+## Table of Contents
 
-The [initial commit](https://github.com/coko7/latuicon/commit/0fc806c) bootstrapped from the icon-picker component of [late.sh](https://github.com/mpiorowski/late-sh) (specifically code up until [6c670683](https://github.com/mpiorowski/late-sh/commit/6c670683e301cbef3df08683c84bc91141a0faee)). All development since then is independent.
-
-Changes and additions:
-
-- **Fuzzy search** 🪄 — word-level Levenshtein matching so small typos still find the right icon (e.g. `tumbs up` → 👍)
-- **Data files** 📂 — emoji, kaomoji, unicode, and nerd font data extracted into editable JSON files under `data/`
-- **Centered layout** 🎯 — subtitle under the title, icon-set block sized to content, search and icon list horizontally inset
-- **Standalone binary** 📦 — packaged as `latuicon`, decoupled from the late.sh monorepo
-
-Designed for shell capture:
-
-```sh
-icon=$(latuicon)
-```
+- [Install](#install)
+  - [Nix](#nix)
+  - [Cargo](#cargo)
+  - [Arch Linux (AUR)](#arch-linux-aur)
+  - [Build from source](#build-from-source)
+  - [Nix development environment](#nix-development-environment)
+- [Usage](#usage)
+  - [Keybindings](#keybindings)
+  - [Tabs](#tabs)
+  - [Desktop integration example (Hyprland)](#desktop-integration-example-hyprland)
+- [Configuration](#configuration)
+  - [Themes](#themes)
+- [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
 
 ## Install
 
@@ -98,7 +97,34 @@ latuicon --tab unicode            # opens on a specific tab (all, emoji, kaomoji
 LATUICON_TAB=nerd latuicon
 ```
 
-Prints the chosen icon to stdout on confirm, nothing on Esc/Ctrl+C.
+Prints the chosen icon to `stdout`.
+
+### Keybindings
+
+| Key | Action |
+| ----- | -------- |
+| `↑` / `↓` | Navigate list |
+| `Ctrl+K` / `Ctrl+J` | Navigate list (vi-style) |
+| `PgUp` / `PgDn` | Page up / down |
+| `Ctrl+U` / `Ctrl+D` | Half-page up / down |
+| `Tab` / `Shift+Tab` | Switch tab |
+| `Enter` | Select and exit |
+| `Esc` / `Ctrl+C` | Exit without selecting |
+| Type anything | Filter by name |
+| `Ctrl+Z` | Undo search edit |
+| Mouse click | Select tab or item |
+| Double-click | Select and exit |
+| Scroll wheel | Scroll list |
+
+Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+B`, `Ctrl+W`, `Ctrl+Y`, etc.).
+
+### Tabs
+
+- **All** — every icon from every other tab, combined into one searchable set
+- **Emoji** — common emoji + full emoji set
+- **Kaomoji** — curated kaomoji collection
+- **Unicode** — common symbols + Box Drawing, Geometric Shapes, Arrows, Math Operators, Dingbats; search supports `U+XXXX` / `0xXXXX` hex lookup and full Unicode name scan
+- **Nerd Font** — common glyphs + full Nerd Font glyph set
 
 ### Desktop integration example ([Hyprland](https://hypr.land/))
 
@@ -130,41 +156,37 @@ windowrule {
 
 Pressing `$mainMod + ,` opens a floating terminal with the picker; confirming an icon copies it straight to the Wayland clipboard.
 
-## Keybindings
+## Configuration
 
-| Key | Action |
-| ----- | -------- |
-| `↑` / `↓` | Navigate list |
-| `Ctrl+K` / `Ctrl+J` | Navigate list (vi-style) |
-| `PgUp` / `PgDn` | Page up / down |
-| `Ctrl+U` / `Ctrl+D` | Half-page up / down |
-| `Tab` / `Shift+Tab` | Switch tab |
-| `Enter` | Select and exit |
-| `Esc` / `Ctrl+C` | Exit without selecting |
-| Type anything | Filter by name |
-| `Ctrl+Z` | Undo search edit |
-| Mouse click | Select tab or item |
-| Double-click | Select and exit |
-| Scroll wheel | Scroll list |
+You can configure `latuicon` in `config.toml`:
 
-Search supports full emacs cursor movement (`Ctrl+A`, `Ctrl+E`, `Ctrl+F`, `Ctrl+B`, `Ctrl+W`, `Ctrl+Y`, etc.).
+- Linux: `~/.config/latuicon/config.toml`
+- macOS: `~/Library/Application Support/latuicon/config.toml`
+- Windows: `%APPDATA%\latuicon\config.toml`
 
-## Themes
+Example:
+
+```toml
+theme = "mocha"
+default_tab = "nerd-font"
+```
+
+Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
+Precedence: CLI flag > env var > config file > built-in default.
+
+### Themes
 
 `contrast` (default), `late`, `purple`, `mocha`, `gruvbox`, `dracula`
 
-## Tabs
-
-- **All** — every icon from every other tab, combined into one searchable set
-- **Emoji** — common emoji + full emoji set
-- **Kaomoji** — curated kaomoji collection
-- **Unicode** — common symbols + Box Drawing, Geometric Shapes, Arrows, Math Operators, Dingbats; search supports `U+XXXX` / `0xXXXX` hex lookup and full Unicode name scan
-- **Nerd Font** — common glyphs + full Nerd Font glyph set
-
-## Credits
+## What's the relationship with late.sh?
 
 The project was seeded from the icon-picker component of [late.sh](https://github.com/mpiorowski/late-sh) at commit [6c670683](https://github.com/mpiorowski/late-sh/commit/6c670683e301cbef3df08683c84bc91141a0faee). Code written after the initial commit is not derived from that project.
 
 The original icon picker was written by [@mevanlc](https://github.com/mevanlc); the late.sh project is maintained by [@mpiorowski](https://github.com/mpiorowski).
+
+**A big thanks to the both of them! ✨**
+
+> [!NOTE]
+> For more details, you can read the full story of how `latuicon` began on my blog: [blog.lazyfreax.dev/blog/latuicon-icon-picker](https://blog.lazyfreax.dev/blog/latuicon-icon-picker)
 
 See [`THIRD_PARTY_LICENSES.md`](./THIRD_PARTY_LICENSES.md) for the license covering the derived code from the initial commit.
