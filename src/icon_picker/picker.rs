@@ -77,7 +77,7 @@ pub fn entry_at_selectable<'a>(
 }
 
 pub fn move_selection(state: &mut IconPickerState, catalog: &IconCatalogData, delta: isize) {
-    catalog.with_filtered(state.tab, &state.search_str(), |sections| {
+    catalog.with_filtered(state.tab, &state.search_str(), state.search_mode, |sections| {
         let max = selectable_count(sections);
         if max == 0 {
             return;
@@ -90,7 +90,7 @@ pub fn move_selection(state: &mut IconPickerState, catalog: &IconCatalogData, de
 }
 
 pub fn selected_icon(state: &IconPickerState, catalog: &IconCatalogData) -> Option<String> {
-    catalog.with_filtered(state.tab, &state.search_str(), |sections| {
+    catalog.with_filtered(state.tab, &state.search_str(), state.search_mode, |sections| {
         entry_at_selectable(sections, state.selected_index).map(|entry| entry.icon.clone())
     })
 }
@@ -103,7 +103,7 @@ pub fn click_list(state: &mut IconPickerState, catalog: &IconCatalogData, x: u16
     let offset_in_list = (y - list.y) as usize;
     let flat_idx = state.scroll_offset + offset_in_list;
 
-    catalog.with_filtered(state.tab, &state.search_str(), |sections| {
+    catalog.with_filtered(state.tab, &state.search_str(), state.search_mode, |sections| {
         let Some(selectable_idx) = flat_to_selectable(sections, flat_idx) else {
             return false;
         };
@@ -310,7 +310,7 @@ fn render_icon_list(f: &mut Frame, area: Rect, state: &IconPickerState, catalog:
         return;
     }
 
-    catalog.with_filtered(state.tab, &state.search_str(), |sections| {
+    catalog.with_filtered(state.tab, &state.search_str(), state.search_mode, |sections| {
         let total_flat = flat_len(sections);
         let selected_flat = selectable_to_flat(sections, state.selected_index);
         let scroll = state.scroll_offset;

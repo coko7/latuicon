@@ -11,6 +11,8 @@ use std::time::Instant;
 
 use crate::theme;
 
+pub use catalog::SearchMode;
+
 /// Fallback when the picker hasn't been rendered yet (first input before
 /// first frame). Matches the minimum icon-list height in `picker::render`.
 pub const DEFAULT_VISIBLE_HEIGHT: usize = 13;
@@ -61,6 +63,7 @@ impl IconPickerTab {
 #[derive(Debug, Clone)]
 pub struct IconPickerState {
     pub tab: IconPickerTab,
+    pub search_mode: SearchMode,
     pub search_query: TextArea<'static>,
     pub selected_index: usize,
     pub scroll_offset: usize,
@@ -78,6 +81,7 @@ impl Default for IconPickerState {
     fn default() -> Self {
         Self {
             tab: IconPickerTab::Emoji,
+            search_mode: SearchMode::Fuzzy,
             search_query: new_search_textarea(),
             selected_index: 0,
             scroll_offset: 0,
@@ -90,9 +94,10 @@ impl Default for IconPickerState {
 }
 
 impl IconPickerState {
-    pub fn new(tab: IconPickerTab) -> Self {
+    pub fn new(tab: IconPickerTab, search_mode: SearchMode) -> Self {
         Self {
             tab,
+            search_mode,
             ..Default::default()
         }
     }

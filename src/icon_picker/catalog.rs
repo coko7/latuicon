@@ -1,10 +1,21 @@
 use std::cell::RefCell;
 
+use clap::ValueEnum;
 use serde_json::Value;
 use unicode_names2 as unicode_names;
 
 use super::IconPickerTab;
 use super::nerd_fonts;
+
+/// Search algorithm used to filter icon lists by name.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum SearchMode {
+    /// Case-insensitive substring match only.
+    Simple,
+    /// Substring match, falling back to word-level Levenshtein distance
+    /// so small typos still find the right icon.
+    Fuzzy,
+}
 
 #[derive(Clone, Debug)]
 pub struct IconEntry {
@@ -106,25 +117,26 @@ impl IconCatalogData {
         &self,
         tab: IconPickerTab,
         query: &str,
+        mode: SearchMode,
         f: impl FnOnce(&[SectionView<'_>]) -> R,
     ) -> R {
         match tab {
             IconPickerTab::All => {
-                let sections = filter_sections(&self.all_sections, query);
+                let sections = filter_sections(&self.all_sections, query, mode);
                 f(&sections)
             }
             IconPickerTab::Emoji => {
-                let sections = filter_sections(&self.emoji_sections, query);
+                let sections = filter_sections(&self.emoji_sections, query, mode);
                 f(&sections)
             }
             IconPickerTab::Kaomoji => {
-                let sections = filter_sections(&self.kaomoji_sections, query);
+                let sections = filter_sections(&self.kaomoji_sections, query, mode);
                 f(&sections)
             }
             IconPickerTab::Unicode => {
                 let query = query.trim();
                 if query.is_empty() {
-                    let sections = filter_sections(&self.unicode_browse_sections, "");
+                    let sections = filter_sections(&self.unicode_browse_sections, "", mode);
                     return f(&sections);
                 }
 
@@ -152,11 +164,11 @@ impl IconCatalogData {
 
                 let cache = self.unicode_query_cache.borrow();
                 let cached = cache.first().expect("unicode query cache missing");
-                let sections = filter_sections(&cached.sections, "");
+                let sections = filter_sections(&cached.sections, "", mode);
                 f(&sections)
             }
             IconPickerTab::NerdFont => {
-                let sections = filter_sections(&self.nerd_sections, query);
+                let sections = filter_sections(&self.nerd_sections, query, mode);
                 f(&sections)
             }
         }
@@ -197,7 +209,11 @@ fn prefixed_sections(category: &str, sections: &[IconSection]) -> Vec<IconSectio
         .collect()
 }
 
-fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionView<'a>> {
+fn filter_sections<'a>(
+    sections: &'a [IconSection],
+    query: &str,
+    mode: SearchMode,
+) -> Vec<SectionView<'a>> {
     let query_lower = query.to_lowercase();
     sections
         .iter()
@@ -208,7 +224,10 @@ fn filter_sections<'a>(sections: &'a [IconSection], query: &str) -> Vec<SectionV
                 section
                     .entries
                     .iter()
-                    .filter(|entry| fuzzy_match(&entry.name_lower, &query_lower))
+                    .filter(|entry| match mode {
+                        SearchMode::Simple => entry.name_lower.contains(&query_lower),
+                        SearchMode::Fuzzy => fuzzy_match(&entry.name_lower, &query_lower),
+                    })
                     .collect()
             };
             if entries.is_empty() {
@@ -529,7 +548,7 @@ mod tests {
             title: "A".to_string(),
             entries: vec![entry("Fire"), entry("Water")],
         }];
-        let views = filter_sections(&sections, "");
+        let views = filter_sections(&sections, "", SearchMode::Fuzzy);
         assert_eq!(views.len(), 1);
         assert_eq!(views[0].entries.len(), 2);
     }
@@ -546,7 +565,7 @@ mod tests {
                 entries: vec![entry("Water")],
             },
         ];
-        let views = filter_sections(&sections, "fire");
+        let views = filter_sections(&sections, "fire", SearchMode::Fuzzy);
         assert_eq!(views.len(), 1);
         assert_eq!(views[0].title, "A");
     }
@@ -557,7 +576,27 @@ mod tests {
             title: "A".to_string(),
             entries: vec![entry("Grinning Face")],
         }];
-        let views = filter_sections(&sections, "GRIN");
+        let views = filter_sections(&sections, "GRIN", SearchMode::Fuzzy);
+        assert_eq!(views[0].entries.len(), 1);
+    }
+
+    #[test]
+    fn filter_sections_simple_mode_rejects_typos() {
+        let sections = vec![IconSection {
+            title: "A".to_string(),
+            entries: vec![entry("Grinning Face")],
+        }];
+        let views = filter_sections(&sections, "grining", SearchMode::Simple);
+        assert!(views.is_empty());
+    }
+
+    #[test]
+    fn filter_sections_simple_mode_accepts_substring() {
+        let sections = vec![IconSection {
+            title: "A".to_string(),
+            entries: vec![entry("Grinning Face")],
+        }];
+        let views = filter_sections(&sections, "grin", SearchMode::Simple);
         assert_eq!(views[0].entries.len(), 1);
     }
 

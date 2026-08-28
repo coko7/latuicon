@@ -5,6 +5,7 @@ use clap::ValueEnum;
 use serde::{Deserialize, Deserializer};
 
 use crate::icon_picker::IconPickerTab;
+use crate::icon_picker::catalog::SearchMode;
 use crate::theme::Theme;
 
 /// Persistent user configuration, loaded from TOML file.
@@ -16,6 +17,9 @@ pub struct Config {
 
     #[serde(default, deserialize_with = "deserialize_tab")]
     pub default_tab: Option<IconPickerTab>,
+
+    #[serde(default, deserialize_with = "deserialize_search_mode")]
+    pub search_mode: Option<SearchMode>,
 }
 
 impl Config {
@@ -84,6 +88,19 @@ where
     }
 }
 
+fn deserialize_search_mode<'de, D>(deserializer: D) -> Result<Option<SearchMode>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw: Option<String> = Option::deserialize(deserializer)?;
+    match raw {
+        None => Ok(None),
+        Some(s) => SearchMode::from_str(&s, true)
+            .map(Some)
+            .map_err(serde::de::Error::custom),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,6 +121,12 @@ mod tests {
         let config = parse("theme = \"mocha\"\ndefault_tab = \"nerd-font\"\n");
         assert_eq!(config.theme, Some(Theme::Mocha));
         assert_eq!(config.default_tab, Some(IconPickerTab::NerdFont));
+    }
+
+    #[test]
+    fn parses_search_mode() {
+        let config = parse("search_mode = \"simple\"\n");
+        assert_eq!(config.search_mode, Some(SearchMode::Simple));
     }
 
     #[test]
