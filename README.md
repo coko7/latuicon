@@ -33,6 +33,7 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
 - [Configuration](#configuration)
   - [Themes](#themes)
   - [Search mode](#search-mode)
+  - [Tab order](#tab-order)
 - [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
 
 ## Install
