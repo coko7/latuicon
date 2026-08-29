@@ -177,10 +177,20 @@ You can configure `latuicon` in `config.toml`:
 Example:
 
 ```toml
+# Set the color theme
 theme = "mocha"
-default_tab = "nerd-font"
-search_mode = "simple"
-tabs = ["nerd-font", "emoji", "all", "kaomoji", "unicode"]
+
+# Set the default tab (selected tab on launch)
+default_tab = "all"
+
+# Set the search mode:
+# - simple: case-insensitive substring match only
+# - fuzzy: substring match, using word-level Levenshtein distance for ignoring small typos
+search_mode = "fuzzy" # or 'simple'
+
+# Configure the enabled tabs and their display order.
+# Missing tabs will not have their icons available through "All".
+tabs = ["all", "emoji", "kaomoji", "unicode", "nerd-font"] 
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
