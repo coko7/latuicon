@@ -181,7 +181,7 @@ pub fn click_tab(state: &mut IconPickerState, x: u16, y: u16) -> bool {
     if tabs.height == 0 || y < tabs.y || y >= tabs.y + tabs.height {
         return false;
     }
-    let Some(tab) = tab_at_x(tabs, x, &state.tab_order) else {
+    let Some(tab) = tab_at_x(tabs, x, &state.tabs) else {
         return false;
     };
     state.set_tab(tab);
@@ -232,7 +232,7 @@ fn render_subtitle(f: &mut Frame, area: Rect) {
 fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
     let mut spans: Vec<Span> = Vec::new();
     spans.push(Span::raw(" "));
-    for (index, tab) in state.tab_order.iter().enumerate() {
+    for (index, tab) in state.tabs.iter().enumerate() {
         if index > 0 {
             spans.push(Span::styled("  ", Style::default().fg(theme::TEXT_DIM())));
         }
@@ -254,11 +254,11 @@ fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
     // Shrink the block to fit content and center it horizontally.
     let content_width = TAB_STRIP_LEAD
         + state
-            .tab_order
+            .tabs
             .iter()
             .map(|t| tab_cell_width(t.label()))
             .sum::<u16>()
-        + (state.tab_order.len() as u16 - 1) * TAB_STRIP_GAP;
+        + (state.tabs.len() as u16 - 1) * TAB_STRIP_GAP;
 
     let block_width = (content_width + 2).min(area.width); // +2 for left/right border
     let block_x = area.x + area.width.saturating_sub(block_width) / 2;

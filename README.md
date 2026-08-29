@@ -33,7 +33,7 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
 - [Configuration](#configuration)
   - [Themes](#themes)
   - [Search mode](#search-mode)
-  - [Tab order](#tab-order)
+  - [Tabs](#tabs-1)
 - [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
 
 ## Install
@@ -95,14 +95,16 @@ latuicon                          # default theme, opens on emoji tab
 latuicon --theme mocha            # specific theme
 LATUICON_THEME=dracula latuicon
 
-latuicon --tab unicode            # opens on a specific tab (all, emoji, kaomoji, unicode, nerd font)
+latuicon --tab unicode            # sets default tab (all, emoji, kaomoji, unicode, nerd font)
 LATUICON_TAB=nerd latuicon
 
 latuicon --search-mode simple     # substring-only search (default: fuzzy)
 LATUICON_SEARCH=fuzzy latuicon
 
-latuicon --tab-order "nerd-font,emoji,all,kaomoji,unicode"  # reorder tab strip / Tab cycling
-LATUICON_TAB_ORDER="nerd-font,emoji,all,kaomoji,unicode" latuicon
+latuicon --tabs "nerd-font,emoji,all,kaomoji,unicode"  # reorder tab strip / Tab cycling
+LATUICON_TABS="nerd-font,emoji,all,kaomoji,unicode" latuicon
+
+latuicon --tabs "emoji,kaomoji"  # only enable emoji and kaomoji tabs
 ```
 
 Prints the chosen icon to `stdout`.
@@ -178,7 +180,7 @@ Example:
 theme = "mocha"
 default_tab = "nerd-font"
 search_mode = "simple"
-tab_order = ["nerd-font", "emoji", "all", "kaomoji", "unicode"]
+tabs = ["nerd-font", "emoji", "all", "kaomoji", "unicode"]
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
@@ -195,12 +197,13 @@ Precedence: CLI flag > env var > config file > built-in default.
 
 Set with `--search-mode <mode>` / `-s <mode>` / `LATUICON_SEARCH` / `search_mode` in the config file.
 
-### Tab order
+### Tabs
 
-You can re-arrange tabs in the order you prefer.
-The custom order needs to contain all 5 tabs (`all`, `emoji`, `kaomoji`, `unicode`, `nerd-font`).
+You can configure which tabs are enabled, and in what order.
+To do so, provide a list which corresponds to a subset of the 5 tabs.
+A tab missing from this subset will be disabled: hidden from UI and excluded from the "All" icon set.
 
-Set with `--tab-order <list>` / `LATUICON_TAB_ORDER` / `tab_order` in the config file.
+Set with `--tabs <list>` / `LATUICON_TABS` / `tabs` in the config file.
 
 ## What's the relationship with late.sh?
 
