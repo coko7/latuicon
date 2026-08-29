@@ -54,9 +54,9 @@ struct Cli {
     #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
     config: Option<PathBuf>,
 
-    /// Comma-separated tab display order
-    #[arg(long, env = "LATUICON_TAB_ORDER")]
-    tab_order: Option<String>,
+    /// Comma-separated list of enabled tabs, in display order
+    #[arg(long, env = "LATUICON_TABS")]
+    tabs: Option<String>,
 }
 
 const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
@@ -80,11 +80,11 @@ fn main() -> io::Result<()> {
         .or(config.search_mode)
         .unwrap_or(DEFAULT_SEARCH_MODE);
 
-    let cli_tab_order = match cli.tab_order {
+    let cli_tabs = match cli.tabs {
         Some(raw) => {
             let names: Vec<String> = raw.split(',').map(|s| s.trim().to_string()).collect();
-            match IconPickerTab::parse_order(&names) {
-                Ok(order) => Some(order),
+            match IconPickerTab::parse_tabs(&names) {
+                Ok(tabs) => Some(tabs),
                 Err(err) => {
                     eprintln!("latuicon: error: {err}");
                     std::process::exit(1);
@@ -93,9 +93,17 @@ fn main() -> io::Result<()> {
         }
         None => None,
     };
-    let tab_order = cli_tab_order
-        .or(config.tab_order)
+    let tabs = cli_tabs
+        .or(config.tabs)
         .unwrap_or_else(|| IconPickerTab::ALL.to_vec());
+
+    if !tabs.contains(&tab) {
+        eprintln!(
+            "latuicon: error: default tab '{}' is disabled (not in tabs list)",
+            tab.label()
+        );
+        std::process::exit(1);
+    }
 
     theme::set(theme);
 
@@ -107,8 +115,8 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut state = IconPickerState::new(tab, search_mode, tab_order);
-    let catalog = IconCatalogData::load();
+    let catalog = IconCatalogData::load(&tabs);
+    let mut state = IconPickerState::new(tab, search_mode, tabs);
     let mut selected: Option<String> = None;
 
     loop {
@@ -315,28 +323,28 @@ mod tests {
     }
 
     #[test]
-    fn cli_parses_tab_order_flag() {
-        let cli = Cli::parse_from(["latuicon", "--tab-order", "nerd,all,emoji,kaomoji,unicode"]);
+    fn cli_parses_tabs_flag() {
+        let cli = Cli::parse_from(["latuicon", "--tabs", "nerd,all,emoji,kaomoji,unicode"]);
+        assert_eq!(cli.tabs, Some("nerd,all,emoji,kaomoji,unicode".to_string()));
+    }
+
+    #[test]
+    fn tabs_resolution_accepts_a_subset_to_disable_the_rest() {
+        let names: Vec<String> = "all,emoji".split(',').map(str::to_string).collect();
         assert_eq!(
-            cli.tab_order,
-            Some("nerd,all,emoji,kaomoji,unicode".to_string())
+            IconPickerTab::parse_tabs(&names).unwrap(),
+            vec![IconPickerTab::All, IconPickerTab::Emoji]
         );
     }
 
     #[test]
-    fn tab_order_resolution_rejects_incomplete_order() {
-        let names: Vec<String> = "all,emoji".split(',').map(str::to_string).collect();
-        assert!(IconPickerTab::parse_order(&names).is_err());
-    }
-
-    #[test]
-    fn tab_order_resolution_accepts_full_permutation() {
+    fn tabs_resolution_accepts_full_permutation() {
         let names: Vec<String> = "nerd,all,emoji,kaomoji,unicode"
             .split(',')
             .map(str::to_string)
             .collect();
         assert_eq!(
-            IconPickerTab::parse_order(&names).unwrap(),
+            IconPickerTab::parse_tabs(&names).unwrap(),
             vec![
                 IconPickerTab::NerdFont,
                 IconPickerTab::All,

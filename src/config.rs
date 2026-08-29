@@ -21,8 +21,10 @@ pub struct Config {
     #[serde(default, deserialize_with = "deserialize_search_mode")]
     pub search_mode: Option<SearchMode>,
 
-    #[serde(default, deserialize_with = "deserialize_tab_order")]
-    pub tab_order: Option<Vec<IconPickerTab>>,
+    /// Enabled tabs, in display/cycling order. A tab omitted here is
+    /// disabled: hidden from the UI, and excluded from the "All" icon set.
+    #[serde(default, deserialize_with = "deserialize_tabs")]
+    pub tabs: Option<Vec<IconPickerTab>>,
 }
 
 impl Config {
@@ -91,14 +93,14 @@ where
     }
 }
 
-fn deserialize_tab_order<'de, D>(deserializer: D) -> Result<Option<Vec<IconPickerTab>>, D::Error>
+fn deserialize_tabs<'de, D>(deserializer: D) -> Result<Option<Vec<IconPickerTab>>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let raw: Option<Vec<String>> = Option::deserialize(deserializer)?;
     match raw {
         None => Ok(None),
-        Some(names) => IconPickerTab::parse_order(&names)
+        Some(names) => IconPickerTab::parse_tabs(&names)
             .map(Some)
             .map_err(serde::de::Error::custom),
     }
@@ -158,11 +160,11 @@ mod tests {
     }
 
     #[test]
-    fn parses_tab_order() {
+    fn parses_tabs() {
         let config =
-            parse("tab_order = [\"emoji\", \"nerd-font\", \"all\", \"kaomoji\", \"unicode\"]\n");
+            parse("tabs = [\"emoji\", \"nerd-font\", \"all\", \"kaomoji\", \"unicode\"]\n");
         assert_eq!(
-            config.tab_order,
+            config.tabs,
             Some(vec![
                 IconPickerTab::Emoji,
                 IconPickerTab::NerdFont,
@@ -174,16 +176,24 @@ mod tests {
     }
 
     #[test]
-    fn tab_order_missing_a_tab_fails_to_parse() {
-        let result: Result<Config, _> = toml::from_str("tab_order = [\"all\", \"emoji\"]\n");
+    fn tabs_missing_some_disables_them() {
+        let config = parse("tabs = [\"all\", \"emoji\"]\n");
+        assert_eq!(
+            config.tabs,
+            Some(vec![IconPickerTab::All, IconPickerTab::Emoji])
+        );
+    }
+
+    #[test]
+    fn empty_tabs_list_fails_to_parse() {
+        let result: Result<Config, _> = toml::from_str("tabs = []\n");
         assert!(result.is_err());
     }
 
     #[test]
-    fn tab_order_with_unknown_tab_fails_to_parse() {
-        let result: Result<Config, _> = toml::from_str(
-            "tab_order = [\"all\", \"emoji\", \"kaomoji\", \"unicode\", \"bogus\"]\n",
-        );
+    fn tabs_with_unknown_tab_fails_to_parse() {
+        let result: Result<Config, _> =
+            toml::from_str("tabs = [\"all\", \"emoji\", \"kaomoji\", \"unicode\", \"bogus\"]\n");
         assert!(result.is_err());
     }
 

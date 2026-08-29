@@ -57,7 +57,10 @@ const UNICODE_SEARCH_LIMIT: usize = 200;
 const UNICODE_QUERY_CACHE_CAP: usize = 16;
 
 impl IconCatalogData {
-    pub fn load() -> Self {
+    /// `enabled_tabs` controls which category catalogs
+    /// feed into the "All" tab's combined set.
+    /// Disabled tabs icons are excluded from "All".
+    pub fn load(enabled_tabs: &[IconPickerTab]) -> Self {
         let emoji_sections = vec![
             IconSection {
                 title: "Common Emoji".to_string(),
@@ -97,6 +100,7 @@ impl IconCatalogData {
         ];
 
         let all_sections = build_all_sections(
+            enabled_tabs,
             &emoji_sections,
             &kaomoji_sections,
             &unicode_browse_sections,
@@ -179,16 +183,25 @@ impl IconCatalogData {
 /// prefixing each section title with its category so headers stay
 /// distinguishable (e.g. "Emoji · Common Emoji").
 fn build_all_sections(
+    enabled_tabs: &[IconPickerTab],
     emoji_sections: &[IconSection],
     kaomoji_sections: &[IconSection],
     unicode_browse_sections: &[IconSection],
     nerd_sections: &[IconSection],
 ) -> Vec<IconSection> {
     let mut sections = Vec::new();
-    sections.extend(prefixed_sections("Emoji", emoji_sections));
-    sections.extend(prefixed_sections("Kaomoji", kaomoji_sections));
-    sections.extend(prefixed_sections("Unicode", unicode_browse_sections));
-    sections.extend(prefixed_sections("Nerd Font", nerd_sections));
+    if enabled_tabs.contains(&IconPickerTab::Emoji) {
+        sections.extend(prefixed_sections("Emoji", emoji_sections));
+    }
+    if enabled_tabs.contains(&IconPickerTab::Kaomoji) {
+        sections.extend(prefixed_sections("Kaomoji", kaomoji_sections));
+    }
+    if enabled_tabs.contains(&IconPickerTab::Unicode) {
+        sections.extend(prefixed_sections("Unicode", unicode_browse_sections));
+    }
+    if enabled_tabs.contains(&IconPickerTab::NerdFont) {
+        sections.extend(prefixed_sections("Nerd Font", nerd_sections));
+    }
     sections
 }
 

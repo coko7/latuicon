@@ -59,33 +59,26 @@ impl IconPickerTab {
         order[(index + order.len() - 1) % order.len()]
     }
 
-    /// Parses a tab display order from raw name strings,
-    /// requiring every tab to appear exactly once.
-    pub fn parse_order(raw: &[String]) -> Result<Vec<IconPickerTab>, String> {
-        let mut order = Vec::with_capacity(raw.len());
+    /// Parses the enabled tab list from raw name strings.
+    /// A tab omitted here is disabled: hidden from the UI and excluded from "All".
+    pub fn parse_tabs(raw: &[String]) -> Result<Vec<IconPickerTab>, String> {
+        let mut tabs = Vec::with_capacity(raw.len());
         for name in raw {
             let tab = Self::from_str(name, true)
-                .map_err(|_| format!("unknown tab '{name}' in tab order"))?;
-            order.push(tab);
+                .map_err(|_| format!("unknown tab '{name}' in tab list"))?;
+            tabs.push(tab);
         }
-        Self::validate_order(&order)?;
-        Ok(order)
+        Self::validate_tabs(&tabs)?;
+        Ok(tabs)
     }
 
-    fn validate_order(order: &[IconPickerTab]) -> Result<(), String> {
-        if order.len() != Self::ALL.len() {
-            return Err(format!(
-                "tab order must list all {} tabs exactly once, got {}",
-                Self::ALL.len(),
-                order.len()
-            ));
+    fn validate_tabs(tabs: &[IconPickerTab]) -> Result<(), String> {
+        if tabs.is_empty() {
+            return Err("tab list must include at least one tab".to_string());
         }
-        for tab in Self::ALL {
-            if order.iter().filter(|t| **t == tab).count() != 1 {
-                return Err(format!(
-                    "tab order must include '{}' exactly once",
-                    tab.label()
-                ));
+        for tab in tabs {
+            if tabs.iter().filter(|t| *t == tab).count() > 1 {
+                return Err(format!("tab list must not repeat '{}'", tab.label()));
             }
         }
         Ok(())
@@ -95,7 +88,9 @@ impl IconPickerTab {
 #[derive(Debug, Clone)]
 pub struct IconPickerState {
     pub tab: IconPickerTab,
-    pub tab_order: Vec<IconPickerTab>,
+    /// Enabled tabs, in display/cycling order.
+    /// A tab absent from this list is disabled.
+    pub tabs: Vec<IconPickerTab>,
     pub search_mode: SearchMode,
     pub search_query: TextArea<'static>,
     pub selected_index: usize,
@@ -114,7 +109,7 @@ impl Default for IconPickerState {
     fn default() -> Self {
         Self {
             tab: IconPickerTab::Emoji,
-            tab_order: IconPickerTab::ALL.to_vec(),
+            tabs: IconPickerTab::ALL.to_vec(),
             search_mode: SearchMode::Fuzzy,
             search_query: new_search_textarea(),
             selected_index: 0,
@@ -128,10 +123,10 @@ impl Default for IconPickerState {
 }
 
 impl IconPickerState {
-    pub fn new(tab: IconPickerTab, search_mode: SearchMode, tab_order: Vec<IconPickerTab>) -> Self {
+    pub fn new(tab: IconPickerTab, search_mode: SearchMode, tabs: Vec<IconPickerTab>) -> Self {
         Self {
             tab,
-            tab_order,
+            tabs,
             search_mode,
             ..Default::default()
         }
@@ -149,11 +144,11 @@ impl IconPickerState {
     }
 
     pub fn next_tab(&mut self) {
-        self.set_tab(self.tab.next_in(&self.tab_order));
+        self.set_tab(self.tab.next_in(&self.tabs));
     }
 
     pub fn prev_tab(&mut self) {
-        self.set_tab(self.tab.prev_in(&self.tab_order));
+        self.set_tab(self.tab.prev_in(&self.tabs));
     }
 
     pub fn search_insert_char(&mut self, ch: char) {
@@ -293,15 +288,30 @@ mod tests {
     }
 
     #[test]
-    fn parse_order_rejects_duplicate_or_missing_tabs() {
+    fn parse_tabs_rejects_duplicate_tabs() {
         let dup = ["all".to_string(), "all".to_string()];
-        assert!(IconPickerTab::parse_order(&dup).is_err());
+        assert!(IconPickerTab::parse_tabs(&dup).is_err());
     }
 
     #[test]
-    fn parse_order_rejects_unknown_tab_name() {
+    fn parse_tabs_rejects_empty_list() {
+        let empty: [String; 0] = [];
+        assert!(IconPickerTab::parse_tabs(&empty).is_err());
+    }
+
+    #[test]
+    fn parse_tabs_accepts_a_subset_to_disable_the_rest() {
+        let names = ["emoji".to_string(), "kaomoji".to_string()];
+        assert_eq!(
+            IconPickerTab::parse_tabs(&names).unwrap(),
+            vec![IconPickerTab::Emoji, IconPickerTab::Kaomoji]
+        );
+    }
+
+    #[test]
+    fn parse_tabs_rejects_unknown_tab_name() {
         let names = ["all".to_string(), "bogus".to_string()];
-        assert!(IconPickerTab::parse_order(&names).is_err());
+        assert!(IconPickerTab::parse_tabs(&names).is_err());
     }
 
     #[test]
