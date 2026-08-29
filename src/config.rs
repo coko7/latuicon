@@ -20,6 +20,9 @@ pub struct Config {
 
     #[serde(default, deserialize_with = "deserialize_search_mode")]
     pub search_mode: Option<SearchMode>,
+
+    #[serde(default, deserialize_with = "deserialize_tab_order")]
+    pub tab_order: Option<Vec<IconPickerTab>>,
 }
 
 impl Config {
@@ -88,6 +91,19 @@ where
     }
 }
 
+fn deserialize_tab_order<'de, D>(deserializer: D) -> Result<Option<Vec<IconPickerTab>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw: Option<Vec<String>> = Option::deserialize(deserializer)?;
+    match raw {
+        None => Ok(None),
+        Some(names) => IconPickerTab::parse_order(&names)
+            .map(Some)
+            .map_err(serde::de::Error::custom),
+    }
+}
+
 fn deserialize_search_mode<'de, D>(deserializer: D) -> Result<Option<SearchMode>, D::Error>
 where
     D: Deserializer<'de>,
@@ -137,10 +153,38 @@ mod tests {
 
     #[test]
     fn unknown_fields_are_ignored_for_forward_compatibility() {
-        let config = parse(
-            "theme = \"dracula\"\ntab_order = [\"all\", \"emoji\"]\n[database]\nenabled = true\n",
-        );
+        let config = parse("theme = \"dracula\"\n[database]\nenabled = true\n");
         assert_eq!(config.theme, Some(Theme::Dracula));
+    }
+
+    #[test]
+    fn parses_tab_order() {
+        let config =
+            parse("tab_order = [\"emoji\", \"nerd-font\", \"all\", \"kaomoji\", \"unicode\"]\n");
+        assert_eq!(
+            config.tab_order,
+            Some(vec![
+                IconPickerTab::Emoji,
+                IconPickerTab::NerdFont,
+                IconPickerTab::All,
+                IconPickerTab::Kaomoji,
+                IconPickerTab::Unicode,
+            ])
+        );
+    }
+
+    #[test]
+    fn tab_order_missing_a_tab_fails_to_parse() {
+        let result: Result<Config, _> = toml::from_str("tab_order = [\"all\", \"emoji\"]\n");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tab_order_with_unknown_tab_fails_to_parse() {
+        let result: Result<Config, _> = toml::from_str(
+            "tab_order = [\"all\", \"emoji\", \"kaomoji\", \"unicode\", \"bogus\"]\n",
+        );
+        assert!(result.is_err());
     }
 
     #[test]

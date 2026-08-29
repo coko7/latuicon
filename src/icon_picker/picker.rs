@@ -150,7 +150,7 @@ fn tab_cell_width(label: &str) -> u16 {
     4 + label.chars().count() as u16
 }
 
-pub fn tab_at_x(tabs_inner: Rect, x: u16) -> Option<IconPickerTab> {
+pub fn tab_at_x(tabs_inner: Rect, x: u16, order: &[IconPickerTab]) -> Option<IconPickerTab> {
     if tabs_inner.width == 0 || x < tabs_inner.x {
         return None;
     }
@@ -159,11 +159,11 @@ pub fn tab_at_x(tabs_inner: Rect, x: u16) -> Option<IconPickerTab> {
         return None;
     }
     let mut cursor = TAB_STRIP_LEAD;
-    for (index, tab) in IconPickerTab::ALL.iter().enumerate() {
+    for (index, tab) in order.iter().enumerate() {
         let width = tab_cell_width(tab.label());
         let cell_end = cursor
             + width
-            + if index + 1 < IconPickerTab::ALL.len() {
+            + if index + 1 < order.len() {
                 TAB_STRIP_GAP
             } else {
                 0
@@ -181,7 +181,7 @@ pub fn click_tab(state: &mut IconPickerState, x: u16, y: u16) -> bool {
     if tabs.height == 0 || y < tabs.y || y >= tabs.y + tabs.height {
         return false;
     }
-    let Some(tab) = tab_at_x(tabs, x) else {
+    let Some(tab) = tab_at_x(tabs, x, &state.tab_order) else {
         return false;
     };
     state.set_tab(tab);
@@ -232,7 +232,7 @@ fn render_subtitle(f: &mut Frame, area: Rect) {
 fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
     let mut spans: Vec<Span> = Vec::new();
     spans.push(Span::raw(" "));
-    for (index, tab) in IconPickerTab::ALL.iter().enumerate() {
+    for (index, tab) in state.tab_order.iter().enumerate() {
         if index > 0 {
             spans.push(Span::styled("  ", Style::default().fg(theme::TEXT_DIM())));
         }
@@ -253,11 +253,12 @@ fn render_tabs(f: &mut Frame, area: Rect, state: &IconPickerState) {
 
     // Shrink the block to fit content and center it horizontally.
     let content_width = TAB_STRIP_LEAD
-        + IconPickerTab::ALL
+        + state
+            .tab_order
             .iter()
             .map(|t| tab_cell_width(t.label()))
             .sum::<u16>()
-        + (IconPickerTab::ALL.len() as u16 - 1) * TAB_STRIP_GAP;
+        + (state.tab_order.len() as u16 - 1) * TAB_STRIP_GAP;
 
     let block_width = (content_width + 2).min(area.width); // +2 for left/right border
     let block_x = area.x + area.width.saturating_sub(block_width) / 2;
