@@ -18,7 +18,7 @@ use std::{fs::OpenOptions, io};
 
 use config::Config;
 
-use icon_picker::catalog::IconCatalogData;
+use icon_picker::catalog::{IconCatalogData, SearchMode};
 use icon_picker::{IconPickerState, IconPickerTab, picker};
 
 /// interactive TUI icon/emoji/kaomoji picker
@@ -46,6 +46,10 @@ struct Cli {
     #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum)]
     tab: Option<IconPickerTab>,
 
+    /// simple string match or fuzzy/typo-tolerant comparison
+    #[arg(short = 's', long, env = "LATUICON_SEARCH", value_enum)]
+    search_mode: Option<SearchMode>,
+
     /// Path to config file
     #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
     config: Option<PathBuf>,
@@ -53,6 +57,7 @@ struct Cli {
 
 const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
 const DEFAULT_TAB: IconPickerTab = IconPickerTab::Emoji;
+const DEFAULT_SEARCH_MODE: SearchMode = SearchMode::Fuzzy;
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
@@ -66,6 +71,10 @@ fn main() -> io::Result<()> {
 
     let theme = cli.theme.or(config.theme).unwrap_or(DEFAULT_THEME);
     let tab = cli.tab.or(config.default_tab).unwrap_or(DEFAULT_TAB);
+    let search_mode = cli
+        .search_mode
+        .or(config.search_mode)
+        .unwrap_or(DEFAULT_SEARCH_MODE);
 
     theme::set(theme);
 
@@ -77,7 +86,7 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut state = IconPickerState::new(tab);
+    let mut state = IconPickerState::new(tab, search_mode);
     let catalog = IconCatalogData::load();
     let mut selected: Option<String> = None;
 
@@ -219,6 +228,7 @@ mod tests {
         let cli = Cli::try_parse_from(["latuicon"]).unwrap();
         assert_eq!(cli.theme, None);
         assert_eq!(cli.tab, None);
+        assert_eq!(cli.search_mode, None);
     }
 
     #[test]
@@ -233,6 +243,17 @@ mod tests {
         let cli = Cli::parse_from(["latuicon", "-t", "dracula", "-T", "nerd"]);
         assert_eq!(cli.theme, Some(theme::Theme::Dracula));
         assert_eq!(cli.tab, Some(IconPickerTab::NerdFont));
+    }
+
+    #[test]
+    fn cli_parses_search_mode_flag() {
+        let cli = Cli::parse_from(["latuicon", "-s", "simple"]);
+        assert_eq!(cli.search_mode, Some(SearchMode::Simple));
+    }
+
+    #[test]
+    fn cli_rejects_unknown_search_mode() {
+        assert!(Cli::try_parse_from(["latuicon", "--search-mode", "bogus"]).is_err());
     }
 
     #[test]
@@ -255,6 +276,10 @@ mod tests {
         assert_eq!(
             None::<IconPickerTab>.or(None).unwrap_or(DEFAULT_TAB),
             DEFAULT_TAB
+        );
+        assert_eq!(
+            None::<SearchMode>.or(None).unwrap_or(DEFAULT_SEARCH_MODE),
+            DEFAULT_SEARCH_MODE
         );
     }
 

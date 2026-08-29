@@ -32,6 +32,7 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
   - [Desktop integration example (Hyprland)](#desktop-integration-example-hyprland)
 - [Configuration](#configuration)
   - [Themes](#themes)
+  - [Search mode](#search-mode)
 - [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
 
 ## Install
@@ -95,6 +96,9 @@ LATUICON_THEME=dracula latuicon
 
 latuicon --tab unicode            # opens on a specific tab (all, emoji, kaomoji, unicode, nerd font)
 LATUICON_TAB=nerd latuicon
+
+latuicon --search-mode simple     # substring-only search (default: fuzzy)
+LATUICON_SEARCH=fuzzy latuicon
 ```
 
 Prints the chosen icon to `stdout`.
@@ -169,6 +173,7 @@ Example:
 ```toml
 theme = "mocha"
 default_tab = "nerd-font"
+search_mode = "simple"
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
@@ -177,6 +182,13 @@ Precedence: CLI flag > env var > config file > built-in default.
 ### Themes
 
 `contrast` (default), `late`, `purple`, `mocha`, `gruvbox`, `dracula`
+
+### Search mode
+
+- `fuzzy` (default) — substring match, falling back to word-level Levenshtein distance so small typos still find the right icon
+- `simple` — case-insensitive substring match only
+
+Set with `--search-mode <mode>` / `-s <mode>` / `LATUICON_SEARCH` / `search_mode` in the config file.
 
 ## What's the relationship with late.sh?
 
