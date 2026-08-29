@@ -53,6 +53,10 @@ struct Cli {
     /// Path to config file
     #[arg(short = 'c', long, env = "LATUICON_CONFIG")]
     config: Option<PathBuf>,
+
+    /// Comma-separated tab display order
+    #[arg(long, env = "LATUICON_TAB_ORDER")]
+    tab_order: Option<String>,
 }
 
 const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
@@ -76,6 +80,23 @@ fn main() -> io::Result<()> {
         .or(config.search_mode)
         .unwrap_or(DEFAULT_SEARCH_MODE);
 
+    let cli_tab_order = match cli.tab_order {
+        Some(raw) => {
+            let names: Vec<String> = raw.split(',').map(|s| s.trim().to_string()).collect();
+            match IconPickerTab::parse_order(&names) {
+                Ok(order) => Some(order),
+                Err(err) => {
+                    eprintln!("latuicon: error: {err}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        None => None,
+    };
+    let tab_order = cli_tab_order
+        .or(config.tab_order)
+        .unwrap_or_else(|| IconPickerTab::ALL.to_vec());
+
     theme::set(theme);
 
     let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
@@ -86,7 +107,7 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut state = IconPickerState::new(tab, search_mode);
+    let mut state = IconPickerState::new(tab, search_mode, tab_order);
     let catalog = IconCatalogData::load();
     let mut selected: Option<String> = None;
 
@@ -291,5 +312,38 @@ mod tests {
     #[test]
     fn cli_rejects_unknown_theme() {
         assert!(Cli::try_parse_from(["latuicon", "--theme", "bogus"]).is_err());
+    }
+
+    #[test]
+    fn cli_parses_tab_order_flag() {
+        let cli = Cli::parse_from(["latuicon", "--tab-order", "nerd,all,emoji,kaomoji,unicode"]);
+        assert_eq!(
+            cli.tab_order,
+            Some("nerd,all,emoji,kaomoji,unicode".to_string())
+        );
+    }
+
+    #[test]
+    fn tab_order_resolution_rejects_incomplete_order() {
+        let names: Vec<String> = "all,emoji".split(',').map(str::to_string).collect();
+        assert!(IconPickerTab::parse_order(&names).is_err());
+    }
+
+    #[test]
+    fn tab_order_resolution_accepts_full_permutation() {
+        let names: Vec<String> = "nerd,all,emoji,kaomoji,unicode"
+            .split(',')
+            .map(str::to_string)
+            .collect();
+        assert_eq!(
+            IconPickerTab::parse_order(&names).unwrap(),
+            vec![
+                IconPickerTab::NerdFont,
+                IconPickerTab::All,
+                IconPickerTab::Emoji,
+                IconPickerTab::Kaomoji,
+                IconPickerTab::Unicode,
+            ]
+        );
     }
 }

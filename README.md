@@ -99,6 +99,9 @@ LATUICON_TAB=nerd latuicon
 
 latuicon --search-mode simple     # substring-only search (default: fuzzy)
 LATUICON_SEARCH=fuzzy latuicon
+
+latuicon --tab-order "nerd-font,emoji,all,kaomoji,unicode"  # reorder tab strip / Tab cycling
+LATUICON_TAB_ORDER="nerd-font,emoji,all,kaomoji,unicode" latuicon
 ```
 
 Prints the chosen icon to `stdout`.
@@ -174,6 +177,7 @@ Example:
 theme = "mocha"
 default_tab = "nerd-font"
 search_mode = "simple"
+tab_order = ["nerd-font", "emoji", "all", "kaomoji", "unicode"]
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
@@ -189,6 +193,13 @@ Precedence: CLI flag > env var > config file > built-in default.
 - `simple` — case-insensitive substring match only
 
 Set with `--search-mode <mode>` / `-s <mode>` / `LATUICON_SEARCH` / `search_mode` in the config file.
+
+### Tab order
+
+You can re-arrange tabs in the order you prefer.
+The custom order needs to contain all 5 tabs (`all`, `emoji`, `kaomoji`, `unicode`, `nerd-font`).
+
+Set with `--tab-order <list>` / `LATUICON_TAB_ORDER` / `tab_order` in the config file.
 
 ## What's the relationship with late.sh?
 

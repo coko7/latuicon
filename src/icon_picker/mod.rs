@@ -49,20 +49,53 @@ impl IconPickerTab {
         }
     }
 
-    pub fn next(self) -> Self {
-        let index = Self::ALL.iter().position(|tab| *tab == self).unwrap_or(0);
-        Self::ALL[(index + 1) % Self::ALL.len()]
+    pub fn next_in(self, order: &[IconPickerTab]) -> Self {
+        let index = order.iter().position(|tab| *tab == self).unwrap_or(0);
+        order[(index + 1) % order.len()]
     }
 
-    pub fn prev(self) -> Self {
-        let index = Self::ALL.iter().position(|tab| *tab == self).unwrap_or(0);
-        Self::ALL[(index + Self::ALL.len() - 1) % Self::ALL.len()]
+    pub fn prev_in(self, order: &[IconPickerTab]) -> Self {
+        let index = order.iter().position(|tab| *tab == self).unwrap_or(0);
+        order[(index + order.len() - 1) % order.len()]
+    }
+
+    /// Parses a tab display order from raw name strings,
+    /// requiring every tab to appear exactly once.
+    pub fn parse_order(raw: &[String]) -> Result<Vec<IconPickerTab>, String> {
+        let mut order = Vec::with_capacity(raw.len());
+        for name in raw {
+            let tab = Self::from_str(name, true)
+                .map_err(|_| format!("unknown tab '{name}' in tab order"))?;
+            order.push(tab);
+        }
+        Self::validate_order(&order)?;
+        Ok(order)
+    }
+
+    fn validate_order(order: &[IconPickerTab]) -> Result<(), String> {
+        if order.len() != Self::ALL.len() {
+            return Err(format!(
+                "tab order must list all {} tabs exactly once, got {}",
+                Self::ALL.len(),
+                order.len()
+            ));
+        }
+        for tab in Self::ALL {
+            if order.iter().filter(|t| **t == tab).count() != 1 {
+                return Err(format!(
+                    "tab order must include '{}' exactly once",
+                    tab.label()
+                ));
+            }
+        }
+        Ok(())
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct IconPickerState {
     pub tab: IconPickerTab,
+    pub tab_order: Vec<IconPickerTab>,
     pub search_mode: SearchMode,
     pub search_query: TextArea<'static>,
     pub selected_index: usize,
@@ -81,6 +114,7 @@ impl Default for IconPickerState {
     fn default() -> Self {
         Self {
             tab: IconPickerTab::Emoji,
+            tab_order: IconPickerTab::ALL.to_vec(),
             search_mode: SearchMode::Fuzzy,
             search_query: new_search_textarea(),
             selected_index: 0,
@@ -94,9 +128,10 @@ impl Default for IconPickerState {
 }
 
 impl IconPickerState {
-    pub fn new(tab: IconPickerTab, search_mode: SearchMode) -> Self {
+    pub fn new(tab: IconPickerTab, search_mode: SearchMode, tab_order: Vec<IconPickerTab>) -> Self {
         Self {
             tab,
+            tab_order,
             search_mode,
             ..Default::default()
         }
@@ -114,11 +149,11 @@ impl IconPickerState {
     }
 
     pub fn next_tab(&mut self) {
-        self.set_tab(self.tab.next());
+        self.set_tab(self.tab.next_in(&self.tab_order));
     }
 
     pub fn prev_tab(&mut self) {
-        self.set_tab(self.tab.prev());
+        self.set_tab(self.tab.prev_in(&self.tab_order));
     }
 
     pub fn search_insert_char(&mut self, ch: char) {
@@ -219,18 +254,54 @@ mod tests {
     fn next_and_prev_cycle_through_all_tabs_in_order() {
         let mut tab = IconPickerTab::All;
         for expected in &IconPickerTab::ALL[1..] {
-            tab = tab.next();
+            tab = tab.next_in(&IconPickerTab::ALL);
             assert_eq!(tab, *expected);
         }
         // wraps back to the first tab
-        assert_eq!(tab.next(), IconPickerTab::All);
+        assert_eq!(tab.next_in(&IconPickerTab::ALL), IconPickerTab::All);
     }
 
     #[test]
     fn prev_is_the_inverse_of_next() {
         for tab in IconPickerTab::ALL {
-            assert_eq!(tab.next().prev(), tab);
+            assert_eq!(
+                tab.next_in(&IconPickerTab::ALL)
+                    .prev_in(&IconPickerTab::ALL),
+                tab
+            );
         }
+    }
+
+    #[test]
+    fn next_in_and_prev_in_respect_custom_order() {
+        let order = [
+            IconPickerTab::NerdFont,
+            IconPickerTab::All,
+            IconPickerTab::Emoji,
+            IconPickerTab::Kaomoji,
+            IconPickerTab::Unicode,
+        ];
+        assert_eq!(IconPickerTab::NerdFont.next_in(&order), IconPickerTab::All);
+        assert_eq!(
+            IconPickerTab::Unicode.next_in(&order),
+            IconPickerTab::NerdFont
+        );
+        assert_eq!(
+            IconPickerTab::NerdFont.prev_in(&order),
+            IconPickerTab::Unicode
+        );
+    }
+
+    #[test]
+    fn parse_order_rejects_duplicate_or_missing_tabs() {
+        let dup = ["all".to_string(), "all".to_string()];
+        assert!(IconPickerTab::parse_order(&dup).is_err());
+    }
+
+    #[test]
+    fn parse_order_rejects_unknown_tab_name() {
+        let names = ["all".to_string(), "bogus".to_string()];
+        assert!(IconPickerTab::parse_order(&names).is_err());
     }
 
     #[test]
