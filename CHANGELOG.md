@@ -15,11 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(tab-order)* add configurable tab ordering ([#16](https://github.com/coko7/latuicon/pull/16))
 - *(search)* add configurable search mode (fuzzy vs simple) ([#15](https://github.com/coko7/latuicon/pull/15))
 
-### Other
-
-- *(README)* add missing tab-order link in ToC
-- *(README)* update banner image
-
 ## [0.1.5](https://github.com/coko7/latuicon/compare/v0.1.4...v0.1.5) - 2026-08-27
 
 ### Added
