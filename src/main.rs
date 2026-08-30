@@ -44,11 +44,23 @@ struct Cli {
     theme: Option<theme::Theme>,
 
     /// Icon tab shown on startup
-    #[arg(short = 'T', long, env = "LATUICON_TAB", value_enum)]
-    tab: Option<IconPickerTab>,
+    #[arg(
+        short = 'd',
+        long = "default-tab",
+        env = "LATUICON_DEFAULT_TAB",
+        value_enum,
+        value_name = "TAB"
+    )]
+    default_tab: Option<IconPickerTab>,
 
     /// simple string match or fuzzy/typo-tolerant comparison
-    #[arg(short = 's', long, env = "LATUICON_SEARCH", value_enum)]
+    #[arg(
+        short = 's',
+        long,
+        env = "LATUICON_SEARCH",
+        value_enum,
+        value_name = "MODE"
+    )]
     search_mode: Option<SearchMode>,
 
     /// Path to config file
@@ -56,7 +68,7 @@ struct Cli {
     config: Option<PathBuf>,
 
     /// Comma-separated list of enabled tabs, in display order
-    #[arg(long, env = "LATUICON_TABS")]
+    #[arg(short = 'T', long, env = "LATUICON_TABS")]
     tabs: Option<String>,
 }
 
@@ -75,7 +87,10 @@ fn main() -> io::Result<()> {
     };
 
     let theme = cli.theme.or(config.theme).unwrap_or(DEFAULT_THEME);
-    let tab = cli.tab.or(config.default_tab).unwrap_or(DEFAULT_TAB);
+    let default_tab = cli
+        .default_tab
+        .or(config.default_tab)
+        .unwrap_or(DEFAULT_TAB);
     let search_mode = cli
         .search_mode
         .or(config.search_mode)
@@ -98,10 +113,10 @@ fn main() -> io::Result<()> {
         .or(config.tabs)
         .unwrap_or_else(|| IconPickerTab::ALL.to_vec());
 
-    if !tabs.contains(&tab) {
+    if !tabs.contains(&default_tab) {
         eprintln!(
             "latuicon: error: default tab '{}' is disabled (not in tabs list)",
-            tab.label()
+            default_tab.label()
         );
         std::process::exit(1);
     }
@@ -117,7 +132,7 @@ fn main() -> io::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let catalog = IconCatalogData::load(&tabs);
-    let mut state = IconPickerState::new(tab, search_mode, tabs);
+    let mut state = IconPickerState::new(default_tab, search_mode, tabs);
     let mut selected: Option<String> = None;
 
     loop {
@@ -257,22 +272,28 @@ mod tests {
     fn cli_leaves_theme_and_tab_unset_when_omitted() {
         let cli = Cli::try_parse_from(["latuicon"]).unwrap();
         assert_eq!(cli.theme, None);
-        assert_eq!(cli.tab, None);
+        assert_eq!(cli.default_tab, None);
         assert_eq!(cli.search_mode, None);
     }
 
     #[test]
     fn cli_parses_theme_and_tab_flags() {
-        let cli = Cli::parse_from(["latuicon", "--theme", "mocha", "--tab", "unicode"]);
+        let cli = Cli::parse_from(["latuicon", "--theme", "mocha", "--default-tab", "unicode"]);
         assert_eq!(cli.theme, Some(theme::Theme::Mocha));
-        assert_eq!(cli.tab, Some(IconPickerTab::Unicode));
+        assert_eq!(cli.default_tab, Some(IconPickerTab::Unicode));
     }
 
     #[test]
     fn cli_accepts_short_flags_and_tab_alias() {
-        let cli = Cli::parse_from(["latuicon", "-t", "dracula", "-T", "nerd"]);
+        let cli = Cli::parse_from(["latuicon", "-t", "dracula", "-d", "nerd"]);
         assert_eq!(cli.theme, Some(theme::Theme::Dracula));
-        assert_eq!(cli.tab, Some(IconPickerTab::NerdFont));
+        assert_eq!(cli.default_tab, Some(IconPickerTab::NerdFont));
+    }
+
+    #[test]
+    fn cli_accepts_short_flag_for_tabs() {
+        let cli = Cli::parse_from(["latuicon", "-T", "nerd,all,emoji"]);
+        assert_eq!(cli.tabs, Some("nerd,all,emoji".to_string()));
     }
 
     #[test]
@@ -315,7 +336,7 @@ mod tests {
 
     #[test]
     fn cli_rejects_unknown_tab() {
-        assert!(Cli::try_parse_from(["latuicon", "--tab", "bogus"]).is_err());
+        assert!(Cli::try_parse_from(["latuicon", "--default-tab", "bogus"]).is_err());
     }
 
     #[test]

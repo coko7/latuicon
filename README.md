@@ -32,6 +32,7 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
   - [Desktop integration example (Hyprland)](#desktop-integration-example-hyprland)
 - [Configuration](#configuration)
   - [Themes](#themes)
+  - [Default tab](#default-tab)
   - [Search mode](#search-mode)
   - [Tabs](#tabs-1)
 - [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
@@ -92,11 +93,12 @@ nix flake check
 
 ```sh
 latuicon                          # default theme, opens on emoji tab
+
 latuicon --theme mocha            # specific theme
 LATUICON_THEME=dracula latuicon
 
-latuicon --tab unicode            # sets default tab (all, emoji, kaomoji, unicode, nerd font)
-LATUICON_TAB=nerd latuicon
+latuicon --default-tab unicode    # sets default tab (all, emoji, kaomoji, unicode, nerd font)
+LATUICON_DEFAULT_TAB=nerd latuicon
 
 latuicon --search-mode simple     # substring-only search (default: fuzzy)
 LATUICON_SEARCH=fuzzy latuicon
@@ -104,7 +106,7 @@ LATUICON_SEARCH=fuzzy latuicon
 latuicon --tabs "nerd-font,emoji,all,kaomoji,unicode"  # reorder tab strip / Tab cycling
 LATUICON_TABS="nerd-font,emoji,all,kaomoji,unicode" latuicon
 
-latuicon --tabs "emoji,kaomoji"  # only enable emoji and kaomoji tabs
+latuicon --tabs "emoji,kaomoji"   # only enable emoji and kaomoji tabs
 ```
 
 Prints the chosen icon to `stdout`.
@@ -200,6 +202,15 @@ Precedence: CLI flag > env var > config file > built-in default.
 
 `contrast` (default), `late`, `purple`, `mocha`, `gruvbox`, `dracula`
 
+Set with `--theme <name>` / `-t <name>` / `LATUICON_THEME` / `theme` in the config file.
+
+### Default tab
+
+Configures which tab is active when `latuicon` opens: `all`, `emoji`, `kaomoji`, `unicode`, or `nerd-font` (default: `emoji`).
+Must be one of the tabs enabled via [Tabs](#tabs-1).
+
+Set with `--default-tab <tab>` / `-d <tab>` / `LATUICON_DEFAULT_TAB` / `default_tab` in the config file.
+
 ### Search mode
 
 - `fuzzy` (default) — substring match, falling back to word-level Levenshtein distance so small typos still find the right icon
@@ -213,7 +224,7 @@ You can configure which tabs are enabled, and in what order.
 To do so, provide a list which corresponds to a subset of the 5 tabs.
 A tab missing from this subset will be disabled: hidden from UI and excluded from the "All" icon set.
 
-Set with `--tabs <list>` / `LATUICON_TABS` / `tabs` in the config file.
+Set with `--tabs <list>` / `-T <list>` / `LATUICON_TABS` / `tabs` in the config file.
 
 ## What's the relationship with late.sh?
 
