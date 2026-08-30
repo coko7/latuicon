@@ -28,6 +28,7 @@ use icon_picker::{IconPickerState, IconPickerTab, picker};
 #[derive(Parser)]
 #[command(
     name = "latuicon",
+    version,
     after_help = "KEYS:\n  \
         ↑/↓          navigate list\n  \
         PgUp/PgDn    page up/down\n  \
