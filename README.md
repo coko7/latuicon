@@ -235,6 +235,6 @@ The original icon picker was written by [@mevanlc](https://github.com/mevanlc); 
 **A big thanks to the both of them! ✨**
 
 > [!NOTE]
-> For more details, you can read the full story of how `latuicon` began on my blog: [blog.lazyfreax.dev/blog/latuicon-icon-picker](https://blog.lazyfreax.dev/blog/latuicon-icon-picker)
+> For more details, you can read the full story of how `latuicon` started: [blog.lazyfreax.dev/blog/latuicon-icon-picker](https://blog.lazyfreax.dev/blog/latuicon-icon-picker)
 
 See [`THIRD_PARTY_LICENSES.md`](./THIRD_PARTY_LICENSES.md) for the license covering the derived code from the initial commit.
