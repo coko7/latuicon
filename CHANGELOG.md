@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7](https://github.com/coko7/latuicon/compare/v0.1.6...v0.1.7) - 2026-09-01
+
+### Added
+
+- *(cli)* rename --tab to --default-tab, add -T short flag for tabs
+- *(cli)* add version flag to CLI help
+
+### Other
+
+- *(icons)* update Nerd Font glyphnames to v3.5.1 (2026-08-21 13:56:47) ([#19](https://github.com/coko7/latuicon/pull/19))
+- update README
+- update config example in README
+
 ## [0.1.6](https://github.com/coko7/latuicon/compare/v0.1.5...v0.1.6) - 2026-08-29
 
 ### Added
