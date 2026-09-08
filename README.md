@@ -1,10 +1,12 @@
+<div align="center">
+
 # 😴 latuicon
 
 `latuicon`, the **lat**e **TUI** **icon** picker: a rip-off of the [late.sh](https://github.com/mpiorowski/late-sh) embedded icon picker.
 
-<p align="center">
-    <img alt="latuicon-demo" src="assets/banner.webp" />
-</p>
+<img alt="latuicon-demo" src="assets/banner.webp" />
+
+</div>
 
 <p align="center">
     <a href="https://crates.io/crates/latuicon"><img src="https://img.shields.io/crates/v/latuicon.svg" alt="Crates info"></a>
