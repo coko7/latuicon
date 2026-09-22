@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::path::Path;
 
 use clap::ValueEnum;
 use serde_json::Value;
@@ -60,7 +61,13 @@ impl IconCatalogData {
     /// `enabled_tabs` controls which category catalogs
     /// feed into the "All" tab's combined set.
     /// Disabled tabs icons are excluded from "All".
-    pub fn load(enabled_tabs: &[IconPickerTab]) -> Self {
+    ///
+    /// `custom_kaomoji_file` can be optionally provided to
+    /// override the builtin list of kaomoji.
+    pub fn load(
+        enabled_tabs: &[IconPickerTab],
+        custom_kaomoji_file: Option<&Path>,
+    ) -> Result<Self, String> {
         let emoji_sections = vec![
             IconSection {
                 title: "Common Emoji".to_string(),
@@ -72,9 +79,13 @@ impl IconCatalogData {
             },
         ];
 
+        let kaomoji_entries = match custom_kaomoji_file {
+            Some(path) => load_custom_kaomoji(path)?,
+            None => load_builtin_kaomoji(),
+        };
         let kaomoji_sections = vec![IconSection {
             title: "Kaomoji".to_string(),
-            entries: build_kaomoji(),
+            entries: kaomoji_entries,
         }];
 
         let unicode_browse_sections = {
@@ -107,14 +118,14 @@ impl IconCatalogData {
             &nerd_sections,
         );
 
-        Self {
+        Ok(Self {
             all_sections,
             emoji_sections,
             kaomoji_sections,
             unicode_browse_sections,
             nerd_sections,
             unicode_query_cache: RefCell::new(Vec::with_capacity(UNICODE_QUERY_CACHE_CAP)),
-        }
+        })
     }
 
     pub fn with_filtered<R>(
@@ -349,17 +360,29 @@ fn build_emoji_all() -> Vec<IconEntry> {
         .collect()
 }
 
-fn build_kaomoji() -> Vec<IconEntry> {
+fn load_builtin_kaomoji() -> Vec<IconEntry> {
     let raw = include_str!("../../data/kaomoji.json");
-    let entries: Vec<Value> = serde_json::from_str(raw).expect("invalid kaomoji.json");
-    entries
+    parse_kaomoji_json(raw).expect("invalid kaomoji.json")
+}
+
+fn parse_kaomoji_json(raw: &str) -> Result<Vec<IconEntry>, String> {
+    let entries: Vec<Value> = serde_json::from_str(raw).map_err(|err| err.to_string())?;
+    Ok(entries
         .iter()
         .filter_map(|v| {
             let icon = v.get("icon")?.as_str()?;
             let name = v.get("name")?.as_str()?;
             Some(make_entry(icon.to_string(), name.to_string()))
         })
-        .collect()
+        .collect())
+}
+
+/// Attempts to load the list of kaomoji from a custom user-supplied file.
+fn load_custom_kaomoji(path: &Path) -> Result<Vec<IconEntry>, String> {
+    let raw = std::fs::read_to_string(path)
+        .map_err(|err| format!("could not read kaomoji file {}: {err}", path.display()))?;
+    parse_kaomoji_json(&raw)
+        .map_err(|err| format!("could not parse kaomoji file {}: {err}", path.display()))
 }
 
 fn build_unicode_common() -> Vec<IconEntry> {
@@ -696,5 +719,25 @@ mod tests {
         }];
         let out = prefixed_sections("Emoji", &sections);
         assert_eq!(out[0].title, "Emoji · Common Emoji");
+    }
+
+    #[test]
+    fn parse_kaomoji_json_reads_icon_and_name() {
+        let raw = r#"[{"icon": "(o_o)", "name": "surprised"}]"#;
+        let entries = parse_kaomoji_json(raw).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].icon, "(o_o)");
+        assert_eq!(entries[0].name, "surprised");
+    }
+
+    #[test]
+    fn parse_kaomoji_json_rejects_invalid_json() {
+        assert!(parse_kaomoji_json("not json").is_err());
+    }
+
+    #[test]
+    fn load_custom_kaomoji_errs_on_missing_file() {
+        let result = load_custom_kaomoji(Path::new("/nonexistent/latuicon-test-kaomoji.json"));
+        assert!(result.is_err());
     }
 }

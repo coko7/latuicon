@@ -25,6 +25,11 @@ pub struct Config {
     /// disabled: hidden from the UI, and excluded from the "All" icon set.
     #[serde(default, deserialize_with = "deserialize_tabs")]
     pub tabs: Option<Vec<IconPickerTab>>,
+
+    /// Path to custom user kaomoji file. Overrides the built-in list entirely.
+    /// Same JSON structure as `data/kaomoji.json`.
+    #[serde(default)]
+    pub kaomoji_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -64,6 +69,14 @@ fn default_path() -> PathBuf {
     match dirs::config_dir() {
         Some(dir) => dir.join("latuicon").join("config.toml"),
         None => PathBuf::from("latuicon.toml"),
+    }
+}
+
+/// Default location for the custom user kaomoji file
+pub fn default_kaomoji_path() -> PathBuf {
+    match dirs::config_dir() {
+        Some(dir) => dir.join("latuicon").join("kaomoji.json"),
+        None => PathBuf::from("latuicon-kaomoji.json"),
     }
 }
 

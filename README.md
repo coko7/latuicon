@@ -37,6 +37,7 @@ A terminal UI icon picker for emoji, kaomoji, Unicode characters, and [Nerd Font
   - [Default tab](#default-tab)
   - [Search mode](#search-mode)
   - [Tabs](#tabs-1)
+  - [Custom kaomoji](#custom-kaomoji)
 - [What's the relationship with late.sh?](#whats-the-relationship-with-latesh)
 
 ## Install
@@ -194,7 +195,11 @@ search_mode = "fuzzy" # or 'simple'
 
 # Configure the enabled tabs and their display order.
 # Missing tabs will not have their icons available through "All".
-tabs = ["all", "emoji", "kaomoji", "unicode", "nerd-font"] 
+tabs = ["all", "emoji", "kaomoji", "unicode", "nerd-font"]
+
+# Path to a custom kaomoji file, overrides the built-in list entirely.
+# No shell expansion: absolute path, not "~/...".
+kaomoji_file = "$HOME/.config/latuicon/kaomoji.json"
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
@@ -227,6 +232,22 @@ To do so, provide a list which corresponds to a subset of the 5 tabs.
 A tab missing from this subset will be disabled: hidden from UI and excluded from the "All" icon set.
 
 Set with `--tabs <list>` / `-T <list>` / `LATUICON_TABS` / `tabs` in the config file.
+
+### Custom kaomoji
+
+You can override the built-in kaomoji list with your own, by providing a JSON file with this structure:
+
+```json
+[
+  { "icon": "(a)", "name": "Smile" },
+  { "icon": "(╯°□°)╯︵ ┻━┻", "name": "table flip" }
+]
+```
+
+If not set explicitly, `latuicon` looks for this file at `~/.config/latuicon/kaomoji.json`.
+It silently falls back to the built-in list if the custom file is missing.
+
+Set with `--kaomoji-file <path>` / `LATUICON_KAOMOJI_FILE` / `kaomoji_file` in the config file.
 
 ## What's the relationship with late.sh?
 
