@@ -126,7 +126,13 @@ fn main() -> io::Result<()> {
     }
 
     let kaomoji_file = match cli.kaomoji_file.or(config.kaomoji_file) {
-        Some(path) => Some(path),
+        Some(path) => match config::expand_path(&path) {
+            Ok(expanded) => Some(expanded),
+            Err(err) => {
+                eprintln!("latuicon: error: {err}");
+                std::process::exit(1);
+            }
+        },
         None => Some(config::default_kaomoji_path()).filter(|path| path.exists()),
     };
 

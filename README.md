@@ -198,8 +198,8 @@ search_mode = "fuzzy" # or 'simple'
 tabs = ["all", "emoji", "kaomoji", "unicode", "nerd-font"]
 
 # Path to a custom kaomoji file, overrides the built-in list entirely.
-# No shell expansion: absolute path, not "~/...".
-kaomoji_file = "$HOME/.config/latuicon/kaomoji.json"
+# Shell expansions supported (`~`, `$HOME`, `$XDG_CONFIG_HOME`, etc.)
+kaomoji_file = "~/.config/latuicon/kaomoji.json"
 ```
 
 Override the path with `--config <path>` / `-c <path>` / `LATUICON_CONFIG`.
