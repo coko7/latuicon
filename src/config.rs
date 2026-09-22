@@ -25,6 +25,11 @@ pub struct Config {
     /// disabled: hidden from the UI, and excluded from the "All" icon set.
     #[serde(default, deserialize_with = "deserialize_tabs")]
     pub tabs: Option<Vec<IconPickerTab>>,
+
+    /// Path to custom user kaomoji file. Overrides the built-in list entirely.
+    /// Same JSON structure as `data/kaomoji.json`.
+    #[serde(default)]
+    pub kaomoji_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -65,6 +70,24 @@ fn default_path() -> PathBuf {
         Some(dir) => dir.join("latuicon").join("config.toml"),
         None => PathBuf::from("latuicon.toml"),
     }
+}
+
+/// Default location for the custom user kaomoji file
+pub fn default_kaomoji_path() -> PathBuf {
+    match dirs::config_dir() {
+        Some(dir) => dir.join("latuicon").join("kaomoji.json"),
+        None => PathBuf::from("latuicon-kaomoji.json"),
+    }
+}
+
+/// Expands `~`, `$VAR`, and `${VAR}` in a path from CLI/env/config.
+pub fn expand_path(path: &Path) -> Result<PathBuf, String> {
+    let Some(raw) = path.to_str() else {
+        return Ok(path.to_path_buf());
+    };
+    shellexpand::full(raw)
+        .map(|expanded| PathBuf::from(expanded.into_owned()))
+        .map_err(|err| format!("could not expand path {}: {err}", path.display()))
 }
 
 fn deserialize_theme<'de, D>(deserializer: D) -> Result<Option<Theme>, D::Error>
@@ -230,6 +253,32 @@ mod tests {
         let result = Config::load(Some(&path));
         fs::remove_file(&path).ok();
 
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn expand_path_leaves_plain_paths_unchanged() {
+        let expanded = expand_path(Path::new("/etc/latuicon/kaomoji.json")).unwrap();
+        assert_eq!(expanded, PathBuf::from("/etc/latuicon/kaomoji.json"));
+    }
+
+    #[test]
+    fn expand_path_expands_env_var() {
+        let home = std::env::var("HOME").expect("HOME must be set for this test");
+        let expanded = expand_path(Path::new("$HOME/kaomoji.json")).unwrap();
+        assert_eq!(expanded, PathBuf::from(format!("{home}/kaomoji.json")));
+    }
+
+    #[test]
+    fn expand_path_expands_tilde() {
+        let home = std::env::var("HOME").expect("HOME must be set for this test");
+        let expanded = expand_path(Path::new("~/kaomoji.json")).unwrap();
+        assert_eq!(expanded, PathBuf::from(format!("{home}/kaomoji.json")));
+    }
+
+    #[test]
+    fn expand_path_errs_on_unknown_var() {
+        let result = expand_path(Path::new("$LATUICON_TEST_UNDEFINED_VAR_XYZ/kaomoji.json"));
         assert!(result.is_err());
     }
 }

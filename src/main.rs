@@ -70,6 +70,10 @@ struct Cli {
     /// Comma-separated list of enabled tabs, in display order
     #[arg(short = 'T', long, env = "LATUICON_TABS")]
     tabs: Option<String>,
+
+    /// Path to a custom kaomoji file
+    #[arg(long, env = "LATUICON_KAOMOJI_FILE")]
+    kaomoji_file: Option<PathBuf>,
 }
 
 const DEFAULT_THEME: theme::Theme = theme::Theme::Contrast;
@@ -121,6 +125,25 @@ fn main() -> io::Result<()> {
         std::process::exit(1);
     }
 
+    let kaomoji_file = match cli.kaomoji_file.or(config.kaomoji_file) {
+        Some(path) => match config::expand_path(&path) {
+            Ok(expanded) => Some(expanded),
+            Err(err) => {
+                eprintln!("latuicon: error: {err}");
+                std::process::exit(1);
+            }
+        },
+        None => Some(config::default_kaomoji_path()).filter(|path| path.exists()),
+    };
+
+    let catalog = match IconCatalogData::load(&tabs, kaomoji_file.as_deref()) {
+        Ok(catalog) => catalog,
+        Err(err) => {
+            eprintln!("latuicon: error: {err}");
+            std::process::exit(1);
+        }
+    };
+
     theme::set(theme);
 
     let tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
@@ -130,8 +153,6 @@ fn main() -> io::Result<()> {
     execute!(&tty, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(tty);
     let mut terminal = Terminal::new(backend)?;
-
-    let catalog = IconCatalogData::load(&tabs);
     let mut state = IconPickerState::new(default_tab, search_mode, tabs);
     let mut selected: Option<String> = None;
 
