@@ -17,10 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- center title because it annoyed one person
 - *(icons)* update Nerd Font glyphnames to v3.5.1 (2026-08-21 13:56:47) ([#19](https://github.com/coko7/latuicon/pull/19))
-- update README
-- update config example in README
+- update config examples in README
+- center README title because it triggered @Mjoyufull
 
 ## [0.1.6](https://github.com/coko7/latuicon/compare/v0.1.5...v0.1.6) - 2026-08-29
 
