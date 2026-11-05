@@ -193,6 +193,9 @@ impl IconCatalogData {
 /// Concatenates every catalog into one combined set for the "All" tab,
 /// prefixing each section title with its category so headers stay
 /// distinguishable (e.g. "Emoji · Common Emoji").
+///
+/// Categories appear in the same order as `enabled_tabs`, so reordering the
+/// tab strip also reorders the "All" tab's sections and search results.
 fn build_all_sections(
     enabled_tabs: &[IconPickerTab],
     emoji_sections: &[IconSection],
@@ -200,20 +203,16 @@ fn build_all_sections(
     unicode_browse_sections: &[IconSection],
     nerd_sections: &[IconSection],
 ) -> Vec<IconSection> {
-    let mut sections = Vec::new();
-    if enabled_tabs.contains(&IconPickerTab::Emoji) {
-        sections.extend(prefixed_sections("Emoji", emoji_sections));
-    }
-    if enabled_tabs.contains(&IconPickerTab::Kaomoji) {
-        sections.extend(prefixed_sections("Kaomoji", kaomoji_sections));
-    }
-    if enabled_tabs.contains(&IconPickerTab::Unicode) {
-        sections.extend(prefixed_sections("Unicode", unicode_browse_sections));
-    }
-    if enabled_tabs.contains(&IconPickerTab::NerdFont) {
-        sections.extend(prefixed_sections("Nerd Font", nerd_sections));
-    }
-    sections
+    enabled_tabs
+        .iter()
+        .flat_map(|tab| match tab {
+            IconPickerTab::All => Vec::new(),
+            IconPickerTab::Emoji => prefixed_sections("Emoji", emoji_sections),
+            IconPickerTab::Kaomoji => prefixed_sections("Kaomoji", kaomoji_sections),
+            IconPickerTab::Unicode => prefixed_sections("Unicode", unicode_browse_sections),
+            IconPickerTab::NerdFont => prefixed_sections("Nerd Font", nerd_sections),
+        })
+        .collect()
 }
 
 fn prefixed_sections(category: &str, sections: &[IconSection]) -> Vec<IconSection> {
@@ -719,6 +718,51 @@ mod tests {
         }];
         let out = prefixed_sections("Emoji", &sections);
         assert_eq!(out[0].title, "Emoji · Common Emoji");
+    }
+
+    fn section(title: &str) -> Vec<IconSection> {
+        vec![IconSection {
+            title: title.to_string(),
+            entries: vec![entry("bear")],
+        }]
+    }
+
+    fn all_titles(enabled_tabs: &[IconPickerTab]) -> Vec<String> {
+        build_all_sections(
+            enabled_tabs,
+            &section("Emoji"),
+            &section("Kaomoji"),
+            &section("Unicode"),
+            &section("Nerd Font"),
+        )
+        .into_iter()
+        .map(|s| s.title)
+        .collect()
+    }
+
+    #[test]
+    fn build_all_sections_follows_tab_order() {
+        let tabs = [
+            IconPickerTab::All,
+            IconPickerTab::Kaomoji,
+            IconPickerTab::Emoji,
+            IconPickerTab::NerdFont,
+            IconPickerTab::Unicode,
+        ];
+        assert_eq!(
+            all_titles(&tabs),
+            ["Kaomoji", "Emoji", "Nerd Font", "Unicode"]
+        );
+    }
+
+    #[test]
+    fn build_all_sections_excludes_disabled_tabs() {
+        let tabs = [
+            IconPickerTab::NerdFont,
+            IconPickerTab::All,
+            IconPickerTab::Emoji,
+        ];
+        assert_eq!(all_titles(&tabs), ["Nerd Font", "Emoji"]);
     }
 
     #[test]

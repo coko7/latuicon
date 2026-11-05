@@ -61,7 +61,7 @@ The list mixes **section headers** and **icon entries**. Two index systems coexi
 | 3 | Page counter (e.g. `page 3/5`) |
 
 The list is organized into `IconSection` groups. Sections for each tab:
-- **All**: every section from Emoji, Kaomoji, Unicode, and NerdFont concatenated, with titles prefixed by category (e.g. "Emoji · Common Emoji") — built once in `IconCatalogData::load()` by cloning entries from the other catalogs
+- **All**: every section from the enabled category tabs concatenated in tab order (`--tabs` / config `tabs`), with titles prefixed by category (e.g. "Emoji · Common Emoji") — built once in `IconCatalogData::load()` by cloning entries from the other catalogs
 - **Emoji**: "Common Emoji" + "All Emoji"
 - **Kaomoji**: single section of 43 hardcoded entries
 - **Unicode**: "Common Unicode" + 5 named ranges (Box Drawing, Geometric Shapes, Arrows, Math Operators, Dingbats)
