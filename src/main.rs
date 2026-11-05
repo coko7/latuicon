@@ -11,8 +11,15 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{Terminal, backend::CrosstermBackend};
+use ratatui::{
+    Terminal,
+    backend::{Backend, CrosstermBackend},
+    buffer::{Buffer, Cell},
+    layout::Rect,
+    text::Span,
+};
 use ratatui_textarea::{Input, Key};
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::{fs::OpenOptions, io};
 
@@ -151,15 +158,32 @@ fn main() -> io::Result<()> {
     enable_raw_mode()?;
 
     execute!(&tty, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(tty);
+
+    // Buffered so each frame reaches the tty in a single write instead of one
+    // syscall per escape sequence.
+    let backend = CrosstermBackend::new(BufWriter::new(tty));
     let mut terminal = Terminal::new(backend)?;
     let mut state = IconPickerState::new(default_tab, search_mode, tabs);
     let mut selected: Option<String> = None;
+    let mut last_view: Option<(IconPickerTab, String, usize)> = None;
 
     loop {
-        terminal.draw(|f| {
+        let view = (state.tab, state.search_str(), state.scroll_offset);
+        let list_changed = last_view.as_ref().is_some_and(|v| *v != view);
+        last_view = Some(view);
+
+        let frame = terminal.draw(|f| {
             picker::render(f, f.area(), &state, &catalog);
         })?;
+
+        // Some glyphs (combining marks, Indic conjuncts, ambiguous-width chars
+        // common in kaomoji) render at a different width than ratatui computes,
+        // so its cell diff can leave stale characters behind. Repaint the list
+        // rows from scratch whenever the list content changes.
+        if list_changed {
+            let buffer = frame.buffer.clone();
+            repaint_area(terminal.backend_mut(), &buffer, state.list_inner.get())?;
+        }
 
         match event::read()? {
             Event::Key(key) => {
@@ -283,6 +307,38 @@ fn main() -> io::Result<()> {
     }
 
     Ok(())
+}
+
+/// Blank every row of `area` on the terminal, then redraw it from `buffer`.
+/// Each non-ASCII glyph ends a draw batch, so the next cell is placed with an
+/// absolute cursor move instead of trusting the terminal's cursor advance.
+/// This stops a glyph the terminal draws wider or narrower than ratatui
+/// expects from shifting the rest of the row.
+fn repaint_area<W: Write>(
+    backend: &mut CrosstermBackend<W>,
+    buffer: &Buffer,
+    area: Rect,
+) -> io::Result<()> {
+    let blank = Cell::default();
+    for y in area.top()..area.bottom() {
+        backend.draw((area.left()..area.right()).map(|x| (x, y, &blank)))?;
+
+        let mut run = Vec::new();
+        let mut x = area.left();
+        while x < area.right() {
+            let cell = &buffer[(x, y)];
+            let symbol = cell.symbol();
+            run.push((x, y, cell));
+            if !symbol.is_ascii() {
+                backend.draw(run.drain(..))?;
+            }
+            // Skip the trailing cells ratatui reserves for wide glyphs;
+            // writing them would erase the glyph's right half.
+            x += (Span::raw(symbol).width() as u16).max(1);
+        }
+        backend.draw(run.drain(..))?;
+    }
+    Backend::flush(backend)
 }
 
 #[cfg(test)]
