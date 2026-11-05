@@ -757,7 +757,11 @@ mod tests {
 
     #[test]
     fn build_all_sections_excludes_disabled_tabs() {
-        let tabs = [IconPickerTab::NerdFont, IconPickerTab::All, IconPickerTab::Emoji];
+        let tabs = [
+            IconPickerTab::NerdFont,
+            IconPickerTab::All,
+            IconPickerTab::Emoji,
+        ];
         assert_eq!(all_titles(&tabs), ["Nerd Font", "Emoji"]);
     }
 
