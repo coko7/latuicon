@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8](https://github.com/coko7/latuicon/compare/v0.1.7...v0.1.8) - 2026-11-05
+
+### Added
+
+- *(tabs)* order "All" tab results by configured tab order ([#23](https://github.com/coko7/latuicon/pull/23))
+
+### Fixed
+
+- *(render)* repaint list rows to clear stale glyphs ([#21](https://github.com/coko7/latuicon/pull/21))
+
 ## [0.1.7](https://github.com/coko7/latuicon/compare/v0.1.6...v0.1.7) - 2026-09-22
 
 ### Added
